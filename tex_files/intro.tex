@@ -1,0 +1,90 @@
+\chapter{Introduction and Problem Statement}
+
+\section{A discussion about privacy}
+
+Personal privacy seems to be in danger. 
+The concerns famously raised by Edward Snowden have not only persisted but have intensified, questioning the perspective on cybersecurity and privacy. 
+The landscape today is arguably more perilous, as the mechanisms for data collection and surveillance have become increasingly sophisticated and pervasive. 
+As Enserink and Chin (2015) describe, we are approaching a future where an individual's entire genome may be sequenced and shared alongside their medical records, "flying cameras may hover over your neighborhood, and sophisticated software may recognize your face as you enter a store or an airport" \cite{the_end_of_pricacy}. 
+They draw a kafkaesque picture of a world where real privacy no longer exists.\\
+This erosion of privacy is often met with the argument that those with nothing to hide have nothing to fear. 
+However, as Solove (2008) contends, this reasoning is a flawed and narrow interpretation \cite{solove2007nothing}.  
+Solove argues that when confronted with this broader spectrum of privacy issues, "the nothing to hide argument, in the end, has nothing to say." 
+This debate raises another question. 
+In this uncanny future, the data of multiple companies document all-encompassing knowledge about your life. 
+The information is scattered across multiple companies. 
+This would be okay if the companies ensured confidentiality and if they did not abuse it for other purposes. 
+But in times of tech monopolies and databrokers this assumption does not hold and often the information contains personnaly identifyable information. 
+Gathered information can be sold for targeted advertisement and other morally questionable purposes. \\
+
+Personal data collection has become ubiquitous across digital platforms. 
+From website registrations and social media connections to cookie consent mechanisms. 
+These touch points systematically harvest user information, leveraging it for targeted advertising and user retention strategies. 
+Users readily grant permissions with minimal friction, while corporations invest substantial resources to acquire this collected data. \cite{lishchuk} 
+"AI models are simplifying Data Brokers overhead by reducing the required work to aggregate and correlate many targeted data sets. 
+Rinse, Repeat, Reuse."\footnote{Anonymous contribution to my thesis after discussing this issue on the WHY2025 conference in Alkmaar, Netherlands} 
+An attacker could steal data from multiple sources and monetize it on the darkweb. 
+With combined datasets it becomes possible to gain a lot of information about a persons life if you want to. 
+Our data, and the data of the people, hence is something we must diligently protect. 
+This thesis will set the foundation for a Blue team methodology and identify the necessary building blocks these companies - that hold the valuable data - can use. \\
+
+The debate about privacy can be controversial and has different dimensions and subtleties. 
+There is an observable tendency that possibilities for privacy are being taken away or forbidden for numerous reasons - meaning the technologies that actually preserve privacy. 
+The European Union's proposed "Chat Control" regulation, designed to combat the proliferation of Child Sexual Abuse Material (CSAM), recently failed to achieve legislative consensus. 
+The proposal would have mandated the scanning of all digital communications, including those on end-to-end encrypted platforms. 
+Consequently, it drew fierce opposition from technology companies and civil liberties advocates, culminating in a failed vote where ten member states rejected the measure in its current form.\footnote{- until now} \cite{chat_control} \\
+The push for new rules extends into the financial sector, particularly targeting cryptocurrencies that prioritize user anonymity. 
+A new regulatory framework aims to restrict transactions involving privacy coins like Monero (XMR), Zcash (ZEC), and Dash. 
+In effect, the EU plans to ban all cryptocurrencies that are designed to provide transaction anonymity from operating within its borders. 
+Regulators justify this by claiming that these coins enable users to easily execute hidden criminal operations and money laundering schemes. 
+The new framework imposes strong management requirements, where transactions exceeding 1,000 euros will need complete identity verification of all participants, including both senders and receivers. 
+While the reasons that spark these debates should be mitigated, solving the problem by compromising fundamental privacy rights should never be the answer. \cite{privacy_coins} 
+These regulatory actions targeting privacy technologies are part of a broader, global trend toward stricter data governance. 
+While there is a push for greater control of citizen data, regulators also impose strict regulations backed by financial penalties that can severely influence the course of a business if misconduct is found. 
+
+\section{Problem Statement}
+The issue of data protection extends far beyond simple surveillance; it includes different problems related to government and corporate data collection, processing, and usage. 
+With the reworked Swiss Federal Act on Data Protection (nFADP) \cite{nFADP} and the European General Data Protection Regulation (GDPR) \cite{thisis} the challenge of data protection has grown more complex for organizations.
+These regulatory frameworks have created a demanding compliance landscape. 
+The penalties for non-compliance are severe, with GDPR fines reaching up to €20 million or 4\% of a company's annual global turnover. \\
+A fundamental obstacle for many organizations is identifying and locating Personally Identifiable Information (PII) within their own systems. 
+According to a study by the Institute of Directors (IoD) and Barclays, over 40\% of businesses do not know where their most critical data resides, making compliance a nearly impossible task \cite{lepide2025companies}.\\
+In cybersecurity, Red Team and Blue Team is a fundamental concept that divides security operations into two complementary roles. 
+The Red Team consists of offensive security professionals who simulate attacks to find vulnerabilities, while the Blue Team focuses on defending systems and responding to threats. 
+Offensive security, or the "Red Team", benefits from established and certified methodologies such as the Open Source Security Testing Methodology Manual (OSSTMM)\cite{osstmm3}. 
+Blue Team's, however, lack equivalent, vendor-neutral and certified processes. 
+The effectiveness of data defense is therefore often reliant on the individual competence and experience of the security team rather than on a standardized, verifiable process. 
+Disparity creates asymmetry. 
+The notion "Red Team vs. Blue Team" is misleading in a sense that it does not really capture reality. 
+The true adversary is not an internal testing team of five professionals, but a global, creative, and economically motivated ecosystem of attackers. 
+The Blue Team has to defend against a vast and persistent external threat landscape, and the absence of a standardized defensive framework leaves blue teams in disadvantage.\\
+
+This gap calls for the the development of a Data Defense Framework and Methodology. 
+This thesis will research the development of a Blue Team Methodology. 
+Ten companies were interviewed about their security posture. 
+In the creation of this project the interviews were used to analyze common patterns and weak points. 
+After developing an understanding for modern company IT systems and their distributed nature, we provide building blocks for the Blue team. 
+(\textit{Research Question 1:}) The central research goal is to develop a methodology for security architects, to empower Blue Teams, ensure regulatory compliance, and mitigate the inherent disadvantage they face in the current cybersecurity landscape. 
+(\textit{Research question 2}) To this end, in the literature review, we will analyze the development of cybersecurity and current practices.  \\
+
+There is some confusion around the term framework and methodology. 
+Our ultimate goal is to develop a methodology. 
+This is important, because it gives an understanding for how to do a task. 
+Many text books like Andersons (2020) \cite{secuity_engineering} collect a lot of modern knowledge about cybersecurity. 
+However, most of the times, this gives the architect a lot of \textit{why}'s. 
+Why something has to be done. 
+And then a how is given only on a conceptual level. 
+In the Why-How paradigm (2004) \cite{freitas2004influence}), participants in the abstract condition are given a description of an activity and are asked to answer why they would engage in it (e.g. why do you maintain your health?); participants in the concrete condition are asked how they would engage in the same activity (e.g. how do you maintain your health?). 
+Focusing on the means required to achieve a specific goal ultimately entails transforming an abstract idea into a concrete action and thus primes a concretizing mindset; likewise, focusing on the purpose of an action primes an abstracting mindset. \cite{freitas2004influence} 
+This would explain why security systems often grow to be so complex. 
+In cybersecurity we can also ask these two questions: Why do you do cybersecurity? 
+And how do you do cybersecurity? 
+In order to develop the "how", we first will understand the "why". 
+We will present a framework that has been developed for the new data-centric security approach. 
+This fundamental research will will describe building blocks needed for the new Blue Tram methodology. 
+This is an huge research field, and needs more research. \\
+\\
+This project was carried out in collaboration with the Swiss Innovative Arts \& Technologies Institute will be published intended as an open source methodology  on GITHUB, so security professionals around the world can use it or enhance it. 
+Questions, comments and ideas for extension can be sent to: \\
+ \\
+ \url{blue.team.methodology@protonmail.com}

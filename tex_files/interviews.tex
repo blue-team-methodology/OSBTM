@@ -1,0 +1,351 @@
+\chapter{Interviews}
+
+\section{Introduction}
+
+To develop this methodology, we analyzed contemporry cybersecurity practices. 
+Interviews regarding the cybersecurity environment were conducted with seven companies (7 out of 10 replied). 
+Due to the small sample size and the single point-in-time nature of this study, the findings should be interpreted as exploratory and experimental.
+However, the questionnaire is designed to identify common vulnerabilities in security systems, with the aim of gathering insights, identifying critical focus areas, and informing the development of the proposed methodology.
+The following section details the main questions asked during the interviews. 
+For each topic, the findings are presented alongside the perspectives of an attacker and a defender.\\
+\\
+The survey was developed in collaboration with the Swiss IATI, who provided expert guidance and supported the participant recruitment and distribution process. 
+A key consideration was ensuring participant anonymity. 
+The study was conducted digitally, and no personally identifiable information (PII) regarding respondents or their organizations was collected.To ensure privacy, all responses were submitted through a secure, anonymous channel. 
+The questions were structured to cover broad topics, which were then explored with specific inquiries aimed at a deeper understanding of implementation details.
+An English and an Italian version of the questionnaire can be accessed on the \href{https://github.com/blue-team-methodology/OSBTM/}{\textit{Open Source Blue Team Methodology Github Repository}}
+
+\section{Analysis}
+
+\subsection*{1. Company information system}
+
+We asked about the company information system. 
+The directory service represents a single, high-value target.
+Two important questions were asked to understand the core infrastructure:\\
+\\
+\textbf{(Question 1) Do you use a directory service for user management (e.g., AD, LDAP+Kerberos, OpenDirectory)?}
+\paragraph{Attacker's Perspective}
+A directory service, e.g. Active Directory (AD), is the "keys to the kingdom." 
+Compromising it allows an attacker to control user accounts and permissions across the entire organization, providing an efficient path to privilege escalation and lateral movement. 
+Attackers can use well-documented attack paths to take over this central system. (See e.g. \href{https://docs.metasploit.com/docs/pentesting/active-directory/}{Metasploit})
+\paragraph{Defender's Perspective}
+From a defensive standpoint, the directory service is a critical component, often classified as a Tier 0 asset, because of its central function in managing identity and access. 
+A defense strategy corresponding to this classification typically includes several activities: hardening the service, implementing the principle of least privilege, and deploying monitoring to detect specific attack patterns.\\
+\\
+\fixme{Add a little explanation about the importance of a directory service}
+\paragraph{Findings (Q1.1)}
+Of the seven companies interviewed, five reported using an Active Directory-based infrastructure for user management. 
+Four of these utilize a standard Microsoft Active Directory environment, while the fifth company employs Samba 4 to emulate an Active Directory domain controller.
+The survey results indicate that Active Directory is a dominant technology for identity and access management. 
+This prevalence can create a security monoculture, where a vulnerability or a common misconfiguration can lead to a widespread risk. 
+If affected, Active Directory can create a single point of catastrophic failure. 
+Companies that use AD should pay attention to carefully configure access control rules. 
+The remaining two companies reported using alternative user management solutions. 
+\paragraph{Findings (Q1.2)}
+One of the seven companies reported a model that does not rely on a central directory service. 
+For their client workstations, they utilize local user accounts. 
+For their cloud infrastructure, they use AWS Identity and Access Management (IAM). 
+This architecture presents a different security landscape, between an on-premise client environment and the cloud environment.
+From an attacker's perspective, the absence of a central directory service like Active Directory removes the "keys to the kingdom" as a target. 
+This forces an attacker into a slower, machine-by-machine effort for lateral movement, shifting their focus to exploiting password reuse or finding a single, inconsistently patched machine. 
+This defensive resilience, however, introduces new management challenges. 
+From a defender's view, enforcing consistent security policies and managing the user lifecycle becomes a manual task prone to error. 
+While the model is more resilient to domain-wide attacks, it makes centralized monitoring and uniform policy enforcement difficult to achieve. 
+But still, cloud security needs to be ensured. 
+The new high-value target becomes the AWS environment. 
+Attacker's could shift their focus from compromising on-premise domain controllers to trying to steal AWS credentials. 
+They may achieve this through phishing, finding hardcoded access keys in the cloud, or exploiting application IAM roles to gain control over cloud resources. 
+This change in the offensive landscape necessitates a corresponding shift in defensive tactics towards strong Cloud Security Posture Management (CSPM). 
+For the Blue Team, this strategy is centered on rigorously applying the Principle of Least Privilege within IAM policies, enforcing Multi-Factor Authentication (MFA) for all human users, and continuously monitoring AWS CloudTrail logs for suspicious API activity.
+An attacker will try to compromise unprotected clients to use them to go to the protected cloud environment. 
+\paragraph{Findings (Q1.3)}
+The resilience of the directory service infrastructure is critical for ensuring business continuity. 
+For any Active Directory domain, the deployment of at least two domain controllers is a fundamental requirement to ensure high availability and fault tolerance; this redundancy can be extended to hybrid environments through the deployment of replica domain controllers in a cloud infrastructure. 
+A comprehensive disaster recovery plan must also include a specific Active Directory backup strategy. 
+In a multi-domain controller environment, a system state backup of at least one controller per domain and physical site is sufficient, as critical data is replicated. 
+However, in a non-recommended single-controller scenario, a full server backup is necessary to facilitate a bare-metal recovery \cite{AD_backup}. 
+Furthermore, secure connectivity between geographically dispersed offices is paramount for both information synchronization and data access. 
+The type of connection used, whether a site-to-site VPN or a dedicated circuit, must employ strong encryption protocols to protect data in transit.\\
+\\
+\noindent \textbf{(Question 2) Are there remote offices?}
+\paragraph{Attacker's Perspective}
+From an attacker's perspective, a remote office expands the overall attack surface and is often viewed as a weaker link in the security chain. 
+It is a strategic access point from which to launch an assault on the parent company's assets. 
+There are two kinds of VPNs. 
+Site-to-site VPNs create a persistent connection between two or more separate office networks. 
+This model uses routers at the edge of each network to build the connection. 
+A roaming client on the other hand relies on a software application installed on the clients device. 
+Roaming client VPNs should use MFA (site-to-site usually does not use MFA because it has to be up all the time). 
+An attacker can compromise user credentials, exploit a lack of Multi-Factor Authentication (MFA), or find unpatched vulnerabilities. 
+Once a foothold is gained within the remote office, the attacker can leverage the inherent trust of the dedicated network connection (e.g., a Leased Line) to move laterally to the headquarters, bypassing stronger perimeter defenses. 
+Additionally, the DR site serves as a valuable secondary objective for data exfiltration or reconnaissance. Leased lines should also be protected, since they can provide a path directly into the internal network without passing through the firewall.
+\paragraph{Defender's Perspective}
+For a defender, the existence of remote offices highlights the need for consistent security policies across all locations. 
+This understanding drives the adoption of a network location independent Zero Trust mindset. 
+It also underscores the importance of securing connections with strong multi-factor authentication (MFA) to protect against credential compromise, and using network segmentation to contain potential breaches and prevent an attacker from easily pivoting from the remote office to the core network. 
+Controllers should also ensure policy consistency in all dependencies. 
+Clearly understanding the physical distribution of your operations is key to mapping its potential attack surface.
+\paragraph{Findings (Q2)}
+Two of the seven companies reported operating remote offices, both employing a consistent architecture where the remote site connects to a central parent company system via a dedicated Leased Line, with user access facilitated by a VPN.
+From an attacker's perspective, this setup presents the remote office not as the final target, but as a strategic access point. 
+The entry vector could be the VPN, where an attacker can exploit weak credentials or a lack of Multi-Factor Authentication (MFA) to gain an internal foothold. Once inside, they can leverage the inherent trust of the Leased Line to attack the core network; if any of the traffic traversing this line is unencrypted, an attacker could also attempt to wiretap it for sensitive information. \\
+\\
+\fixme{Describe the importance of Synchronization}\\
+\\
+Furthermore, if storage-level synchronization is used for disaster recovery (as reported by one company), attackers could amplify their impact through ransomware propagation, where an attack on the primary site can almost instantly destroy the remote data copy.\\
+From a defensive standpoint, this architecture necessitates a multi-faceted strategy. 
+It highlights the need for consistent security policies and a unified information system across all locations, avoiding the complexity and risk of managing disparate systems. 
+This approach requires that information between the systems is reliably synchronized, raising the important question of how synchronization is achieved, particularly if cloud services are not in use. 
+A Zero Trust mindset that does not implicitly trust traffic from the remote office is essential. 
+Securing the VPN with MFA\footnote{not for site-to-site only for roaming clients ... always need to be up} is a critical countermeasure, and VPN traffic must be strongly encrypted, which also requires that the encryption keys are securely controlled and stored. 
+This, combined with network segmentation, helps counter lateral movement. 
+Finally, the risk of ransomware propagation underscores that storage replication is a tool for availability, not a substitute for data integrity, requiring defenders to implement true backups like immutable snapshots.
+
+\subsection{Network}
+
+The network is the digital infrastructure of a company. 
+It is a collection of routers, switches, firewalls, and access points that connects all of a company's computers, servers, and devices. 
+It allows the company's data to travel internally and connect to the outside world. 
+We need to understand the network because it is the primary perimeter of a company's digital assets. 
+Attackers often target the network first to gain entry. 
+Understanding its configuration, protection, and monitoring tells us how well the company guards its main gates and internal pathways against unauthorized access and malicious traffic.\\
+
+\noindent \textbf{(Question 3) Do you segment you network?}\\
+\noindent \textbf{(Question 4) Do you use VLAN?}\\
+\noindent \textbf{(Question 5) Do you use 802.11X?}\\
+\noindent \textbf{(Question 6) Firewalls for internal segmentation?}\\
+\noindent \textbf{(Question 7) L3 switches?}\\
+\noindent \textbf{(Question 8) Do you have one or more wireless networks? }\\
+\noindent \textbf{(Question 9) Do you control endpoints?}\\
+\noindent \textbf{(Question 10) How are you connected to the Internet?}\\
+\noindent \textbf{(Question 11) Are you connected with other entities (e.g. service providers, offices, or customers)?}\\
+
+\paragraph{Attacker's Perspective} An attacker will try to circumvent firewalls and travel through VLANs to get to gain access.
+Each connection, whether wired, wireless, or external, represents a potential entry point or a pathway for lateral movement. 
+The lack of robust access controls allows attackers to intrude a system and remain undetected for a long time, a tactic famously detailed in The Cuckoo's Egg by Stoll (1989) \cite{stoll1990cuckoo}. 
+Attackers can exploit misconfigured L3 switches to bypass internal firewalls and pivot between network segments. 
+Unmonitored connections to the internet or third-party entities can be leveraged for data exfiltration or command and control. 
+Ultimately, the attacker's objective is again to identify and exploit the weakest link in the security chain, such as an unsecure guest Wi-Fi network or a poorly managed endpoint, to compromise the entire infrastructure.
+\paragraph{Defender's Perspective}
+The defending site's approach to network security is based on a layered system of defenses \cite{did} \cite{did2}. \\
+\\
+\fixme{Briefly describe defense in depth}\\
+\\
+Security appliances and programmable switches can be used to enforce policy and create VLANs that segment critical systems from general user traffic. 
+By implementing protocols such as the network security standard IEEE 802.1X \cite{wiki:IEEE_802.1X}, defenders can ensure that only authorized and authenticated devices can connect to the network. 
+All traffic between VLANs should be routed through an advanced firewall or an L3 switch equipped with access control lists for inspection and control. 
+Wireless networks should be secured to the same standard as wired networks. 
+WPA2 and WPA3 can be used.
+If WPA2 is implemented, it should be paired with robust authentication like the RADIUS (Remote Authentication Dial-In User Service) protocol and 802.1X or one-time passwords. 
+A separate, completely isolated guest network is also essential. 
+Defenders should control, manage, and monitor all endpoints and encryption keys across every location to maintain a consistent security posture. 
+The Internet connection, which acts as a critical boundary, is protected with next-generation firewalls and intrusion prevention systems. 
+To reduce the attack surface, the number of public IPs is minimized, and all connections to third parties are strictly controlled and monitored, typically via a demilitarized zone (DMZ) to isolate them from the internal network. 
+The importance of controlling your own keys and tokens can be seen in the 2023 Microsoft incident\footnote{Microsoft incident 2023. China-based threat actor Storm-0558 used forged authentication tokens to access user email from approximately 25 organizations, including government agencies, beginning in May 2023. The China-based threat actor had acquired a Microsoft Account (MSA) consumer signing key and exploited validation vulnerabilities to gain unauthorized access.\cite{microsoft2023analysis}\\ 
+Microsoft stated that the most probable mechanism was through a compromised engineering account that had access to the debugging environment containing the crash dump which incorrectly contained the key. 
+The key material leaked to Microsoft's corporate environment in a crash dump after April 2021, when Storm-0558 had previously compromised a Microsoft engineer's account.\cite{ristic2023microsoft} 
+Wiz researcher Tamari (2023) \cite{tamari} concluded that the compromised MSA key could have allowed the threat actor to forge access tokens for multiple types of Azure Active Directory applications, including every application that supports personal account authentication. 
+This contradicted Microsoft's initial assessment that only Exchange Online and Outlook.com were affected.}, which highlighted the critical importance of protecting authentication tokens and private keys. 
+Unless control is maintained over these elements, their security cannot be assured.
+
+\paragraph{Findings Q3, Q4, Q6, Q7} 
+A foundational element of a defense-in-depth strategy is robust network segmentation. 
+However, its implementation was inconsistent across the surveyed organizations. 
+Four of the seven companies reported using Virtual Local Area Networks (VLANs).  
+Segmentation establishes multiple security layers, limiting the potential for lateral movement by an attacker should a network segment be compromised. 
+Communication between these segments, or inter-VLAN routing, must be carefully controlled.\\
+Segmentation can be done through the firewall. 
+Generally it is not common to use internal firewalls, but they can help to secure specific applications. \\
+A significant weakness was observed in the application of strong authentication and traffic inspection for internal networks. 
+Only one of the seven companies implemented 802.1X authentication, utilizing a RADIUS server for network access control, which represents a significant barrier to unauthorized devices. 
+Furthermore, only three companies deployed firewalls to inspect internal traffic. 
+The absence of internal firewalls in the remaining four organizations means that traffic between internal segments should flow unfiltered, creating a permissive environment for threats that have bypassed perimeter defenses. 
+We also asked about (L3) switches for network routing. 
+While these devices operate on both Layer 2 and Layer 3 of the OSI model \cite{iso7498-1-1994}, they can introduce security vulnerabilities if not meticulously configured. 
+As Neupane et al. \cite{neupane2018next} observe, a modern firewall offers capabilities far exceeding those of an L3 switch, which they liken to a legacy firewall reliant on basic access control lists. 
+A more secure architecture involves using Layer 2 switches in tandem with a modern firewall to perform comprehensive scanning of all internal traffic.\\
+
+\paragraph{Findings Q9}
+Another area of concern is the security posture of network endpoints. 
+While organizations may have antivirus systems in place, the findings indicate a potential oversight to enable and configure advanced endpoint protection capabilities. 
+Modern endpoint security solutions offer features beyond simple signature-based malware detection, including behavioral analysis, exploit prevention, and endpoint detection and response (EDR). 
+Failing to activate these advanced functions leaves the organization vulnerable to sophisticated attacks, such as zero-day exploits and fileless malware, that traditional antivirus software may not detect. 
+A comprehensive security strategy requires that endpoint controls are fully leveraged to provide granular visibility and proactive threat mitigation directly on the devices where users operate and data resides.
+
+
+\paragraph{Findings Q5, Q8, Q10, Q11}
+The analysis of perimeter security and external connections revealed several key findings, particularly concerning wireless networking. 
+While all seven companies utilized WPA2 encryption for their wireless networks, none had adopted the more secure WPA3 standard. 
+Critically, only one organization fortified its WPA2 implementation with WPA2-Enterprise\cite{wpa2e}, which requires certificate-based authentication through 802.1X and a RADIUS server. 
+The remaining six companies relied on the less secure WPA2-PSK (Pre-Shared Key) method. As Raj notes, "802.1x authentication with WPA2-Enterprise encryption is the best way to keep your wireless network safe" \cite{raj}. 
+The common practice of deploying separate guest networks (observed in six of the seven companies) is a positive control, as it isolates untrusted guest traffic from the internal corporate network.\\
+Regarding internet connectivity, one organization reported using a Fiber to the Home (FTTH) connection. 
+While offering high performance, FTTH introduces unique security challenges, including physical infrastructure threats, data breaches, and vulnerabilities in connected devices and firmware \cite{ontolt2023ftth}. 
+This company also reported having four public IP addresses, while another utilized two Class C IP address ranges. 
+A Class C block, with a subnet mask of 255.255.255.0, supports up to 254 host devices per network and is typically used for larger network deployments. 
+The management and security monitoring of these external-facing IP addresses are critical for protecting the network perimeter. 
+To set up guest WIFIs companies can use captive portals and one time key with short-term duration. We should make sure that we create different WLAN networks. 
+Different SSIDs should be mapped to different VLANS.
+
+
+\subsection{Security System}
+
+This category refers to the specific tools, software, and technologies a company actively uses to protect its assets. 
+This includes antivirus software, intrusion detection systems (IDS), encryption tools, and firewalls. 
+If the network is the road system, the security system is the collection of security guards, surveillance cameras, and alarm systems deployed along those roads. 
+A company can have a well-designed network but still be vulnerable if it lacks the right security tools. We ask questions here to gauge the quality and depth of their active defenses. 
+We want to know if they have the right tools to detect, prevent, and respond to threats in real-time, and whether those tools are up-to-date and configured correctly.\\
+
+\noindent \textbf{(Question 12) Are you equipped with firewallsystems?  }\\
+\noindent \textbf{(Question 13) Does it filter outgoing traffic?  }\\
+\noindent \textbf{(Question 14) Are there IDP/IDS systems? }\\
+\noindent \textbf{(Question 15) Are there centralized log management systems? }\\
+\noindent \textbf{(Question 16) Are there SIEM systems or automatic alerting?}\\
+\noindent \textbf{(Question 17) If there are cloud systems, how are they protected? }\\
+\noindent \textbf{(Question 18) Are there remote access systems (VPN, VDI with web portals)?}\\
+\noindent \textbf{(Question 19) Are you equipped with a backup system? }\\
+\noindent \textbf{(Question 20) Do you have an Antivirus system?}\\
+\noindent \textbf{(Question 21) Do you use internet traffic control systems? }\\
+\noindent \textbf{(Question 22) Do you use proxy servers? }\\
+
+
+
+\paragraph{Attacker's perspective}
+A disjointed security architecture presents numerous opportunities for exploitation. 
+An environment lacking integrated Intrusion Detection and Prevention Systems (IDPS), centralized logging, and Security Information and Event Management (SIEM) is effectively blind to the early stages of an attack. 
+Without robust egress filtering or advanced endpoint controls, malicious software can establish command-and-control channels unimpeded. 
+Furthermore, if logs reside on the device themselves, a successful attack could allow an adversary to manipulate logs and hide their tracks, significantly complicating incident response. 
+
+\paragraph{Defender's perspective}
+From a defensive standpoint, again, a multi-layered and integrated security posture is essential. 
+The foundation of this architecture is a Next-Generation Firewall (NGFW) equipped with an IDPS, which should monitor logs from all critical network devices with a defined retention policy (e.g., 30 days). 
+All logs should be forwarded to a centralized log management system, which must be segregated from the primary IT administrative domain ideally managed by the compliance department to ensure their integrity. 
+A good heuristic for understanding how many logs we need to have is the 3-2-1 rule. 
+We should have 3 copies on 2 different devices and one on a different site.
+%, particularly for client machines, increases the potential impact of a ransomware attack, leaving the organization with few recovery options. 
+This system should feed into a SIEM to enable automatic alerting and proactive threat hunting. 
+For cloud environments, protection must be extended through the use of virtual firewalls. 
+Remote access systems, such as VPNs must enforce strong encryption and authentication. 
+A centrally managed antivirus solution with advanced endpoint functions enabled is non-negotiable and must be deployed on all devices, with clear protocols for alerting and intervention. 
+You should use proxy servers for internet traffic control. 
+They must be configured with filtering rules, access controls, and anomaly detection. \cite{proxy}.
+
+\paragraph{Findings Q12-Q22}
+Observations in Network and Infrastructure Security reveal a foundational but incomplete security posture. 
+While all seven companies report having a firewall, none of them filter outgoing traffic. 
+The adoption of more advanced security measures is limited, with only three of the seven companies having implemented Intrusion Detection/Prevention Systems (IDP/IDS). 
+Similarly, the use of specialized network tools is rare; no companies reported using proxy servers, and only one utilizes an internet traffic control system. 
+For companies managing cloud systems, protection methods varied, with one using AWS buckets and another securing their cloud with an advanced firewall. 
+Out of the seven companies, three confirmed using remote access systems, two stated they did not, and two did not answer. 
+It is important that remote access is encrypted and uses strong authentication.\\
+It is noteworthy that while every single company made sure to install antivirus software, some of them failed to activate its most important and powerful protective features. 
+Two participants indicated both, that they had an antivirus software installed and not activated its advanced endpoint features. 
+This is a mistake and if this capability exists (and it should) then it has to be activated. 
+This of course costs money but it is a necessary investment. 
+One company reports no backup system. 
+A consistent observation across all participants is the absence of Security Information and Event Management (SIEM) systems or centralized log management. 
+This indicates that automated security event correlation and alerting are not standard procedures, and log data may not be subject to formal retention or protection policies, impacting potential incident response. 
+As providers increasingly enable IPv6, it's crucial to move beyond default "out of the box" configurations and ensure your firewall rules are updated to explicitly manage and secure this new traffic.
+
+\subsection{Management}
+
+Management covers the human element of cybersecurity: the policies, procedures, and people responsible for security. 
+This includes security awareness training for employees, incident response plans (what to do when a breach happens), risk assessments, and a clear chain of command for security decisions. 
+Software vulnerabilities are one of the most common ways attackers gain access to a network. 
+A "patch" is a fix released by a software vendor to close a security hole. 
+These questions aim to discover how efficiently and completely a company closes these known holes. 
+Every device used by an employee is an "endpoint" that can be a potential weak link.
+These questions assess how well the company manages and secures this fleet of devices to prevent data loss and unauthorized actions.\\
+
+\noindent \textbf{(Question 23) Do you have a system for centralized patch management?}\\
+\noindent \textbf{(Question 24) Does it manage servers?}\\
+\noindent \textbf{(Question 25) Does it manage clients?}\\
+\noindent \textbf{(Question 26) Does it manage mobile devices?}\\
+\noindent \textbf{(Question 27) Do you have one or more maintenance contracts for updating programs and operating systems?}\\
+\noindent \textbf{(Question 28) Do you have a system for automatic or unattended system updates?}\\
+\noindent \textbf{(Question 29) Do you have an MDM system for remote management of mobile systems?}\\
+\noindent \textbf{(Question 30) Do you have a centralized system for managing client security policies?}\\
+\noindent \textbf{(Question 31) Do you use remote control programs for client management? }\\
+\noindent \textbf{(Question 32) Do you have programs to inhibit certain client functions (data transfer, USB ports)? }\\
+
+
+\paragraph{Attacker's perspective}
+The absence of a centralized patch management system can become a security risk. 
+The reliance on manual patch management can lead to inconsistencies and oversights, leaving systems vulnerable to attack. 
+Unpatched servers are particularly critical, as they are a primary target for ransomware and data breaches due to the sensitive data and services they host. 
+Similarly, client devices such as laptops and workstations represent an attack surface if not properly patched, especially through unpatched applications and browsers. 
+Despite their access to corporate data, they are often the least protected and slowest to receive necessary security updates.\\
+The lack of a formal maintenance contract for updates and a system for automatic, unattended updates can leave an organization exposed to vulnerabilities for extended periods. 
+Furthermore, without a robust Mobile Device Management (MDM) system and centralized management of client security policies, it becomes difficult to enforce consistent security standards across the network. 
+This is a critical topic because an employee could take the company machine, download a malicious program at home and bring it back into the company. 
+While remote control programs can be useful for client management, they require strong encryption to prevent exploitation. 
+Finally, the ability to inhibit certain client functions, such as data transfer and USB ports, is a crucial security measure, especially in environments where employees use their own devices, to prevent data exfiltration and the introduction of malware and to cloud drives not belonging to the company.
+
+
+\paragraph{Defender's perspective}
+Defenders can establish a centralized patch management system to automate and standardize the patching process across the entire network. 
+This system should be configured to have an environment to test new patches, and then automatically deploy patches for all devices, including servers, workstations, and laptops. 
+Systems and applications that are most frequently targeted by attackers should be prioritized.\\
+Not assuming a perimeter defense for the network implies we need to be careful what and who can connect to it. 
+Blue teams should also secure endpoints on mobile devices. 
+For example deploy a Mobile Device Management (MDM) system to remotely manage and secure all mobile devices accessing the corporate network. 
+This system will ensure that mobile devices are up-to-date with the latest security patches and are compliant with corporate security policies. 
+Also, implementing a centralized security policy management system that enforces consistent security configurations and controls on all client devices, including firewalls, antivirus software, and access controls is necessary.\\
+Administrators should use strong encryption for all remote control programs to prevent unauthorized access and data interception. 
+Implement Data Loss Prevention (DLP) measures and policies to inhibit critical client functions like data transfer to unapproved locations and the use of USB ports. 
+These controls are especially important in Bring Your Own Device (BYOD) environments to prevent data exfiltration and the introduction of malware. 
+It is important to maintain the system regularly. 
+If your own capacities are not enough you should enter into formal maintenance contracts with software vendors to ensure consistent and timely security updates.\\
+
+\paragraph{Findings Q23-Q31}
+Based on the interview notes, the findings reveal several key observations regarding system and security management. 
+A primary area of concern is patch management, where two organizations reported having no centralized system. 
+Only one organization has a formal maintenance contract for updates, and four do not use automatic or unattended update systems. 
+Similarly, mobile device security appears underdeveloped, with only one participant having implemented a Mobile Device Management (MDM) system. 
+Five companies stated they manage client security policies from a central point. 
+No participants reported using programs to inhibit functions like blocking USB ports or data transfers, a practice that leaves endpoints potentially vulnerable. 
+Finally, while three organizations use remote control programs for client management, this underscores the necessity of securing these remote access channels with robust authentication and encryption to prevent unauthorized access.
+
+\subsection{Verifications}
+
+This category is all about finding weaknesses before the attackers do. 
+It's not enough to have security systems and policies; a company must actively test them to prove they are effective. 
+These questions assess the company's commitment to proactively validating its security controls across technical, human, and physical domains.\\
+
+\noindent \textbf{(Question 33) Have you conducted security checks of your information system (VA, Pen Test, Policy Review?)}\\
+\noindent \textbf{(Question 34) Have security checks been done on employee awareness?}\\
+\noindent \textbf{(Question 35) Security checks on the cloud?}\\
+\noindent \textbf{(Question 36) Has an internal check ever been done, including privilege escalation?}\\
+\noindent \textbf{(Question 37) Have checks been carried out regarding backup systems (including a restore simulation)?}\\
+\noindent \textbf{(Question 38) If you have a Business Continuity system, have system switch tests been done?}\\
+\noindent \textbf{(Question 39) Has an internal check ever been done, including privilege escalation?)}\\
+\noindent \textbf{(Question 40) Has a check ever been done regarding accessibility in the buildings of the various offices?)}
+\noindent \textbf{(Question 41) If you have a DR system, have system switch tests been done??}\\
+
+\paragraph{Attacker's perspective}
+If you don't conduct security checks, you won't know if your defenses work until it's too late. 
+The absence of routine security checks like Vulnerability Assessments (VA) and Penetration Testing (Pen Test) gives attackers a clear advantage, as they will likely find unpatched systems, weak configurations, and exploitable flaws. 
+Also AI can leak critical data. For an attacker it is easier to fool an AI than to fool a human. \\
+Without checking employee security awareness, organizations are highly susceptible to social engineering attacks like phishing, which provide an easy way to gain an initial foothold. 
+The failure to conduct internal checks for privilege escalation is a significant vulnerability, signaling that once inside, an attacker can probably move laterally and gain access to critical data. 
+An often-overlooked aspect is physical security, as an attacker who breaches physical barriers can bypass all network defenses. 
+A simple unsecure LAN port in an office could provide an attacker with a direct entry point. 
+Finally, the absence of Business Continuity (BC) or Disaster Recovery (DR) plans tells an attacker that they can cause maximum operational disruption without fear of a swift recovery, turning a security incident into a catastrophic business failure.
+
+\paragraph{Defender's perspective}
+From a defender's perspective, mitigating these risks requires a proactive and comprehensive strategy focused on verification and resilience. 
+A security plan must begin with routine Vulnerability Assessments (VA) and Penetration Tests (Pen Test) to actively find and fix system flaws before an attacker can exploit them. 
+It is also critical to focus on the human element by regularly checking and improving employee security awareness to build a strong defense against social engineering. 
+An often-overlooked but vital aspect is physical security, which must be routinely audited to prevent an attacker from bypassing network defenses simply by gaining physical access to an office. 
+Beyond prevention, a true defender validates the organization's ability to recover. 
+This means not only having a backup system but also performing regular restore simulations to confirm data recoverability, and conducting system switch tests for both Disaster Recovery (DR) and Business Continuity (BC) plans to ensure they function correctly in a crisis, thereby guaranteeing the business can withstand a major incident without suffering catastrophic operational disruption. 
+Notably, even without disruption, tapes suffer from dataloss after two years and need to be renewed. 
+Tapes are considered a save storage method, but You can even loose your data if no-one steals it. 
+
+\paragraph{Findings Q33-Q41}
+The responses highlight significant different gaps in security verification practices. 
+A fundamental finding is that only three companies reported conducting security checks on their information systems, such as Vulnerability Assessments and Penetration Tests. 
+Most strikingly, no company indicated any form of security checks or training for employee awareness, representing a critical vulnerability to social engineering and phishing attacks. 
+Similarly, none of the companies have performed internal checks for privilege escalation or verified the physical accessibility of their offices, leaving them exposed to internal threats and physical breaches.
+A positive finding is that six out of seven participants have conducted tests on their backup systems, with a strong acknowledgment that regular testing is crucial. 
+However, this is undermined by the fact that no companies have performed system switch tests for their Disaster Recovery (DR) or Business Continuity (BC) systems, meaning their ability to recover from a major incident remains unproven.

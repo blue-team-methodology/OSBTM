@@ -1,0 +1,345 @@
+\chapter{Literature Review}
+During recent years, the cybersecurity landscape has undergone a fundamental transformation. 
+Traditional perimeter-based security models, which served as the foundation of network defense for decades, are increasingly recognized as inadequate for protecting modern digital infrastructures. 
+This literature review examines the transition from perimeter-based security approaches to zero trust architectures and an assume-breach mentality, drawing from academic research, industry studies, and authoritative guidance from intelligence agencies worldwide. 
+It will give an overview over the research field that this methodology is located in. 
+This literature review will be seperated in two parts; One that focuses more on how the mindset in cyber security evolved towards zero-trust principles; and the other one talks about recent implementation challenges and limitations for the Blue team. 
+
+\section{From \textit{castle-and-moat} to \textit{zero-trust}}
+
+\subsection{The Emergence of De-Perimeterization and Zero Trust}
+
+The roots of modern cybersecurity can be traced back to military security models developed in the 1970s. 
+The literature predominantly references two foundational security models from this period: Bell-LaPadula and the Biba models. 
+These models present complementary approaches to information security, with Bell-LaPadula emphasizing confidentiality protection while Biba addresses integrity concerns.\cite{dhillon}
+Bell and LaPadula (1973) \cite{belllapadula} designed a multilevel security policy for the U.S. Department of Defense, establishing the foundational "no read up, no write down" principles that would dominate military security thinking for decades.
+Similarly, Kenneth J. Biba (1975)  developed a complementary integrity model that inverted Bell-LaPadula's approach, implementing "no write up, no read down"\footnote{The logical inverse of Bell and LaPadulas approach} rules to prevent lower-integrity subjects from corrupting higher-integrity data.\cite{biba1975integrity} 
+While Bell-LaPadula protected secrets from unauthorized disclosure, Biba's model ensured that critical system data remained untampered and trustworthy. 
+Some of these models, formalized in the Department of Defense's (1985) \cite{trusted_computer_system} Trusted Computer System Evaluation Criteria (TCSEC), commonly known as the ``Orange Book.'' 
+It defines a hierarchical approach to security that assumes trust based on clearance levels and network location. 
+The TCSEC established evaluation classes to assess the security of computer systems based on their ability to enforce access controls and maintain audit trails. 
+"[...] since the days of the Bell-La Padula and the Biba models, which referred to confidentiality and data integrity respectively [...], the terms '\textit{confidentiality}', '\textit{integrity}', and '\textit{available}' have been widely used in the information security practice and in academic literature." \cite{samonas2014cia}
+
+The "CIA triad", as it is known, refers originally to the fundamental elements of security controls in information systems. 
+These three key terms have not only shaped and informed the 
+
+However, even earlier researchers recognized limitations in perimeter-based approaches. 
+Schell et al. (1973) \cite{schell} documented concerns about insider threats and covert channels in military systems, predicting many of the vulnerabilities that would later drive the adoption of zero trust principles. 
+Their work highlighted how trusted users within the security perimeter could potentially exploit their privileged position to compromise sensitive information, a concern that remains central to modern security thinking.
+
+Perimeter-based security approaches were fundamentally designed for static, centralized computing environments, not the increasingly distributed and dynamic infrastructures that emerged with the internet age. 
+As organizations adopted cloud computing, mobile devices, and remote work arrangements, the traditional security perimeter became increasingly porous and difficult to define. 
+This evolution resulted in a fundamental shift in security philosophy: moving from a network-centric view that trusted everything inside the corporate firewall to a more granular, resource-centric approach that continuously verifies the security posture of individual users, devices, and applications regardless of their network location. 
+Hence, instead of assuming implicit trust based on network location, the idea of de-perimeterization advocates for granular security controls applied to individual resources and transactions. \cite{evolution} 
+The Jericho Forum (2004) \cite{Jericho_Forum}, a consortium of global organizations, was among the first to formally articulate the need for de-perimeterization, arguing that the traditional security perimeter was dissolving due to increased connectivity, mobility, and outsourcing.
+
+Building on these concepts, the zero trust model emerged as a more comprehensive and radical change in enterprise security. 
+While multiple researchers contributed to its development, John Kindervag at Forrester Research (2010) \cite{kindervag2010build} \cite{kindervag2010zero} is widely credited with formalizing and articulating its core principles. 
+Kindervag's seminal work fundamentally challenged the traditional ``castle-and-moat'' security model, which maintained a hardened perimeter but allowed relatively free movement within the network once access was granted. 
+He argued that this approach was fundamentally flawed in an era of sophisticated persistent threats, insider risks, and distributed computing resources. 
+Kindervag's core philosophy for his proposed zero trust model can be summarized as "never trust always verify" and rests on three foundational principles \cite{evolution}:
+ 
+\begin{itemize}
+    \item \textbf{Verify and secure all resources:} Every resource, regardless of location, must be accessed securely with appropriate authentication and authorization
+    \item \textbf{Limit and strictly enforce access control:} Users should have the minimum access necessary to perform their functions, with granular controls based on identity, device posture, and context
+    \item \textbf{Inspect and log all traffic:} All network communications should be monitored and analyzed, providing visibility into potential threats and enabling rapid incident response
+\end{itemize}
+
+\subsection{Google's BeyondCorp: Proving Zero Trust at Scale}
+
+At the same time, in response to Operation Aurora, a highly sophisticated cyberattack in 2009, Google initiated a comprehensive overhaul of its security architecture, fundamentally rethinking employee and device access to internal applications.
+\textit{Operation Aurora was a series of cyberattacks conducted by Chinese-based APT \footnote{APT (Advanced Persistent Threat) groups are a sophisticated, typically state-sponsored or well-funded organization that conducts long-term, stealthy cyberattacks by infiltrating and remaining hidden within target networks for extended periods to steal sensitive data or disrupt operations.\cite{Advanced_persistent_threat}} Groups, including the Elderwood Group, beginning in mid-2009 and continuing through December 2009. 
+The attacks affected over 34 organizations, including Google, Adobe, and multiple defense contractors. 
+Google disclosed the breach publicly on January 12, 2010. 
+The breach originated from spear-phishing attacks (targeted emails sent to specific employees that appeared to come from trusted contacts). 
+These emails contained links to websites hosted in Taiwan that, when clicked, downloaded and executed malicious JavaScript exploiting zero-day vulnerabilities in Internet Explorer to install malware that opened backdoors on the victims' computers. 
+Once inside the network through these compromised endpoints, the attackers targeted source-code management systems, particularly Perforce SCM installations. 
+According to McAfee's investigation, these systems had several security gaps: they ran with system-level privileges on Windows, permitted anonymous user creation without passwords, transmitted data without encryption, and used weak authentication mechanisms. 
+Through these access points, the attackers obtained Google's source code and attempted to access Gmail accounts belonging to Chinese human rights activists. 
+The breach also provided the technical capability to modify source code in the SCM\footnote{Source Code Management} systems, which could have allowed insertion of backdoors into commercial software products before distribution to customers. 
+McAfee's investigation found that developers commonly copied source code to local systems for editing before checking it back into the repository, creating additional points of vulnerability beyond the central SCM servers.}\cite{operationaurora}
+
+Google's implementation of BeyondCorp, documented by Ward and Beyer (2014) \cite{ward2014beyondcorp} and subsequent publications, provided the first large-scale demonstration that zero trust principles could work effectively in a major enterprise environment. 
+The BeyondCorp initiative eliminates the concept of a privileged corporate network and instead treats all networks as untrusted by establishing a comprehensive device inventory, user authentication, and application-level access controls. 
+Rather than using VPNs to extend the corporate perimeter to remote users, BeyondCorp moves all corporate applications to the internet, protected by a sophisticated access proxy that evaluates every connection request based on: (1) User identity and authentication strength (2) Device security posture and compliance status (3) Application sensitivity and data classification (4) Contextual factors such as location and access patterns
+
+Through this approach Google employees were enabled to work securely from any network -- whether corporate, home, or public Wi-Fi -- without traditional VPN connections. 
+As a result, the user or the resource continuously needs to verify, instead of location-based point-in-time authentication. 
+Access decisions are made in real-time for each resource request by assigning dynamic trust levels to both users and devices, and continuously reassessing these levels based on observed behavior and security signals. 
+This provides continuous verification instead of single-point-in-time authentication.
+
+By 2017, Google had successfully migrated its entire corporate environment to the BeyondCorp model, demonstrating that even a large, complex organization could operate effectively without a traditional network perimeter. \cite{e25121595} 
+The success of BeyondCorp has influenced numerous organizations to adopt similar approaches, with Google publishing extensive implementation guides and frameworks to assist others in their zero trust journey. 
+Key resources include their BeyondCorp research papers, the BeyondProd framework for production security, and open-source tools supporting zero trust implementations.
+
+The relevance of this approach became particularly evident during the COVID-19 pandemic in 2020, when organizations worldwide faced unprecedented challenges in securing remote work environments. 
+The rapid transition to remote work required employees to establish home offices in various locations, from dedicated rooms to kitchen tables, necessitating the quick deployment of tools and systems to support distributed work. \cite{zero_trust_adoption_in_europe} 
+The pandemic thus served as a catalyst for many organizations to reassess their security architectures and accelerate their adoption of zero trust principles to accommodate a more distributed workforce that included employees, contractors, and third parties accessing corporate resources from diverse devices and locations. \cite{Defending_against_insider_threats}
+In response to these challenges, IT administrators began shifting workloads to the cloud to take advantage of enhanced flexibility for staff, and hybrid working models became the norm.\\
+ 
+\subsection{Regulatory Environment}
+
+\subsubsection{The European Approach: GDPR's Privacy by design}
+
+The regulatory landscape has evolved into a complex environment where organizations must interpret traditional data protection requirements through a modern achitectural lens. \\
+So far, no current data protection regulation explicitly mandates a full Zero Trust implementation. 
+However, given the evolving threat landscape, many companies picked up on this philosophy in recent years. 
+Alalmaie et al. (2023) conducted a study investigating the recent works which applied Zero Trust and the reason why the interviewed organizations rapidly adopted these principles. 
+Their work showed a significant increase in popularity and trust for ZT, and for around 60\% of corporates, ZT Access is planned for future, while around 30\% corporates, were already planning to implement it. \cite{covid_zero_trust}\\
+
+The GDPR took effect on May 25, 2018, establishing the most comprehensive data protection framework of today. 
+Suspending Directive 95/36/EC \cite{directive95_46}, it aimed to establish a new global standard for privacy rights and data security.\cite{strict} This landmark legislation established Europe as a front-runner in data privacy regulation.\\
+The cybersecurity company \textit{Black Duck} summarizes the key regulatory differences and new additions to the law compared to its predecessor directive: \cite{blackduck2018dpd}
+
+\begin{itemize}
+\itemsep0em
+\item \textbf{Wider Coverage}: The law now applies to any company that handles personal data of EU residents, even if the company is located outside the EU. [\textit{Article 3(2) GDPR}\footnote{\textbf{Article 3(2) GDPR}: "This Regulation applies to the processing of personal data of data subjects who are in the Union by a controller or processor not established in the Union, where the processing activities are related to: (a) the offering of goods or services, irrespective of whether a payment of the data subject is required, to such data subjects in the Union; or (b) the monitoring of their behaviour as far as their behaviour takes place within the Union."}]
+\item \textbf{Better Information}: Companies must give people clearer and more detailed information about how their personal data will be used. [\textit{Article 12(1) GDPR}\footnote{\textbf{Article 12(1) GDPR}: "The controller shall take appropriate measures to provide any information referred to in Articles 13 and 14 and any communication under Articles 15 to 22 and 34 relating to processing to the data subject in a concise, transparent, intelligible and easily accessible form, using clear and plain language [\ldots]"}, \textit{Article 13 GDPR}\footnote{\textbf{Article 13 GDPR} lists extensive information requirements when personal data is collected from the data subject, including: identity and contact details of the controller; purposes of the processing and legal basis; recipients or categories of recipients; retention period; and the existence of data subject rights.}]
+\item \textbf{Stronger Consent Rules}: People must actively agree to data processing (no pre-ticked boxes). They can also withdraw their consent at any time. [\textit{Article 4(11) GDPR}\footnote{\textbf{Article 4(11) GDPR} defines consent as: "any freely given, specific, informed and unambiguous indication of the data subject's wishes by which he or she, by a statement or by a clear affirmative action, signifies agreement to the processing of personal data relating to him or her"}, \textit{Article 7(3) GDPR}\footnote{\textbf{Article 7(3) GDPR}: "The data subject shall have the right to withdraw his or her consent at any time. The withdrawal of consent shall not affect the lawfulness of processing based on consent before its withdrawal. Prior to giving consent, the data subject shall be informed thereof. It shall be as easy to withdraw as to give consent."}]
+\item \textbf{Higher Age Limit}: The minimum age for data collection increased from 13 to 16 years old. [\textit{Article 8(1) GDPR}\footnote{\textbf{Article 8(1) GDPR}: "Where point (a) of Article 6(1) applies, in relation to the offer of information society services directly to a child, the processing of the personal data of a child shall be lawful where the child is at least 16 years old. Where the child is below the age of 16 years, such processing shall be lawful only if and to the extent that consent is given or authorised by the holder of parental responsibility over the child. Member States may provide by law for a lower age for those purposes provided that such lower age is not below 13 years."}]
+\item \textbf{Data Deletion}: Companies must delete personal data when it's no longer needed for its original purpose. [\textit{Article 17(1)(a) GDPR}\footnote{\textbf{Article 17(1)(a) GDPR}: "The data subject shall have the right to obtain from the controller the erasure of personal data concerning him or her without undue delay and the controller shall have the obligation to erase personal data without undue delay where [\ldots] the personal data are no longer necessary in relation to the purposes for which they were collected or otherwise processed"}, \textit{Article 5(1)(e) GDPR}\footnote{\textbf{Article 5(1)(e) GDPR} - Storage limitation principle: Personal data shall be "kept in a form which permits identification of data subjects for no longer than is necessary for the purposes for which the personal data are processed"}]
+\item \textbf{Breach Reporting}: Companies have 72 hours to report data breaches to authorities if the breach could harm individuals. [\textit{Article 33(1) GDPR}\footnote{\textbf{Article 33(1) GDPR}: "In the case of a personal data breach, the controller shall without undue delay and, where feasible, not later than 72 hours after having become aware of it, notify the personal data breach to the supervisory authority competent in accordance with Article 55, unless the personal data breach is unlikely to result in a risk to the rights and freedoms of natural persons. Where the notification to the supervisory authority is not made within 72 hours, it shall be accompanied by reasons for the delay."}, \textit{Article 34(1)}\footnote{\textbf{Article 34(1) GDPR}: "When the personal data breach is likely to result in a high risk to the rights and freedoms of natural persons, the controller shall communicate the personal data breach to the data subject without undue delay."}]
+\item \textbf{Single Complaint Office}: Each EU country has one main office where people can file data protection complaints. [\textit{Article 51(1) GDPR}\footnote{\textbf{Article 51(1) GDPR}: "Each Member State shall provide for one or more independent public authorities to be responsible for monitoring the application of this Regulation, in order to protect the fundamental rights and freedoms of natural persons in relation to processing and to facilitate the free flow of personal data within the Union ('supervisory authority')."}, \textit{Article 77(1) GDPR}\footnote{\textbf{Article 77(1) GDPR}: "Without prejudice to any other administrative or judicial remedy, every data subject shall have the right to lodge a complaint with a supervisory authority, in particular in the Member State of his or her habitual residence, place of work or place of the alleged infringement if the data subject considers that the processing of personal data relating to him or her infringes this Regulation."}]
+\item \textbf{Data Protection Officers}: Large organizations that process significant amounts of data must hire a dedicated data protection officer. [\textit{Article 37(1) GDPR}\footnote{\textbf{Article 37(1) GDPR}: "The controller and the processor shall designate a data protection officer in any case where: (a) the processing is carried out by a public authority or body, except for courts acting in their judicial capacity; (b) the core activities of the controller or the processor consist of processing operations which, by virtue of their nature, their scope and/or their purposes, require regular and systematic monitoring of data subjects on a large scale; or (c) the core activities of the controller or the processor consist of processing on a large scale of special categories of data pursuant to Article 9 or personal data relating to criminal convictions and offences referred to in Article 10."}] \hfill \break
+\item \textbf{Heavy Penalties}: Companies that break GDPR rules can face fines up to €20 million or 4\% of their global annual revenue, whichever is higher. [\textit{Article 83(5) GDPR}\footnote{\textbf{Article 83(5) GDPR}: "Infringements of the following provisions shall [\ldots] be subject to administrative fines up to 20 000 000 EUR, or in the case of an undertaking, up to 4 \% of the total worldwide annual turnover of the preceding financial year, whichever is higher: (a) the basic principles for processing, including conditions for consent, pursuant to Articles 5, 6, 7 and 9; (b) the data subjects' rights pursuant to Articles 12 to 22 [\ldots]"}, \textit{Article 83(4) GDPR}\footnote{\textbf{Article 83(4) GDPR} provides for lower tier fines "up to 10 000 000 EUR, or in the case of an undertaking, up to 2 \% of the total worldwide annual turnover of the preceding financial year, whichever is higher" for certain other infringements.}]
+\end{itemize}
+
+With the rework of Directive 95/36/EC, the European data protection regulations were transformed from reactive threat prevention measures to a proactive defense psychology. 
+This paradigm shift is also evident in GDPRs alignment with zero trust principles. \\
+
+Article 25 gives provisions on data protection by design and by default. \cite{thisis} 
+Article 25(1) requires controllers to "[\dots] implement appropriate technical and organisational measures, such as pseudonymisation, which are designed to implement data-protection principles, such as data minimisation, in an effective manner [\dots]", with implementation based on "the state of the art, the cost of implementation and the nature, scope, context and purposes of processing." 
+This statement ensures, that the selected technologies remain current with technological developments. 
+The second paragraph of Article 25 introduces the concept of data protection by default. 
+Article 25(2) mandates that "[\dots] by default, only personal data which are necessary for each specific purpose of the processing are processed [\dots]". 
+This requirement extends to the amount of personal data collected, the extent of processing, the period of storage, and accessibility. 
+The principle directly parallels zero trust's concept of least privilege access, where users and systems receive only the minimum permissions necessary for their functions. \\
+
+Beyond Article 25, other GDPR provisions reinforce security requirements that align with zero trust concepts. 
+Article 32 mandates "appropriate technical and organisational measures to ensure a level of security appropriate to the risk," including the pseudonymisation and encryption of personal data, the ability to ensure ongoing confidentiality, integrity, availability and resilience of processing systems, and regular testing of security measures \cite{thisis}. 
+Article 5 establishes fundamental principles including data minimization, accuracy, storage limitation, integrity, and confidentiality, each of which corresponds to core ZT objectives.\\
+
+While GDPR does not specifically require a full ZT implementation, following ZT principles can strongly support regulatory compliance. 
+Microsoft Learn (2024) observed that "organizations that have implemented a Zero Trust approach may find that they already meet some new conditions or can easily build upon their Zero Trust architecture to be compliant" \cite{Microsoft2024}, meaning that ZT principles significantly can simplify compliance efforts. 
+Many agree: Nemelka (2025) \cite{zt:handinhand}, Whiteswan Identity Security (2024) \cite{zt:whiteswan}, PricewaterhouseCoopers (2020) \cite{zt:pwc}. 
+In case of an incident (e.g. a coordinated cyber attack), carefuly following "\textit{give no implicit trust}" and "\textit{assume breach}" significantly reduces the attack surface of your organization and the will protect it from a large scale data breach and its implicit regulatory fines. 
+Chaudhry and Hydros (2023) conducted research aiming to privide a framework that would assist banks in securing their data and transactions based on the key concepts of the NIST framework. 
+They point out, that the major advantage of the proposed model is that critical factors and infrastructure relevant to the banking industry are included in the framework design. \cite{chaudhry2023zero}. 
+Bobbert and Timmermans (2023) published a conference paper describing how zero trust as a service\footnote{Zero trust as a service refer security principles—never trust, always verify—via cloud-based solutions} reduces the cost of a data breach.\cite{i2}
+
+\subsubsection{Switzerlands new Federal Act on Data Privacy (nFADP)}
+
+Switzerland's revised Federal Act on Data Protection became effective on September 1, 2023. 
+It represents a significant update to the country's data protection framework and introduces comprehensive requirements across multiple areas. \\
+
+Article 7 mandates companies to prioritize data protection from the design phase, applying \textit{privacy by default} through specific technical and organizational measures that reflect modern ZT security considerations. 
+Article 6 lists core principles for processing personal data, including lawful processing, purpose limitation, data minimization, accuracy, and requires explicit consent for sensitive data processing. 
+Article 8 explicitly mandates controllers and processors to protect personal data against unauthorized access, data breaches, and other threats, with security safeguards proportionate to the level of risk in processing activities. 
+While the nFADP does not require private companies to designate a data protection officer\footnote{Similar to \textbf{Article 37 GDPR}: "[\dots] the processor shall designate a data protection officer [\dots]" (Article 37(1) GDPR) for "[\dots] systematic monitoring of data subjects [\dots]" (Article 37(1)b GDPR)}, it recommends appointing a data protection advisor to support governance. 
+Under Article 12 nFADP, controllers and processors must maintain detailed records of their processing activities, including identity and contact information, processing purposes, data categories and recipients, retention periods, security measures, and international transfer details. 
+Additionally, with Article 24 Swiss organizations have to quickly inform the FDPIC and affected data subjects in case of data breaches\footnote{Similar to \textbf{GDPR Article 33}'s notification requirements}, requiring careful organization of infrastructure to ensure sufficient transparency for quick incident response, as reaction time and impact mitigation measures influence fine determination. \\
+Swiss companies have to report to the Federal Data Protection and Information Commissioner (FDPIC) in case of a data breach\footnote{\textbf{Article 24(1) nFADP}: "The [responsible] controller shall notify the FDPIC of any breach of data security that is likely to lead to a high risk to the data subject's personality or fundamental rights as quickly as possible."}. 
+Notably Switzerland shows its commitment to data privacy by allowing the FDPIC to forward breach incidents to the national cyber security centre for analysis with controller consent (Article 24(5bis) nFADP), enabling researchers to learn from past incidents.\\
+\\
+While the Swiss new FADP and the European GDPR are closely aligned in their core principles, some key differences are important to consider. 
+The nFADP is generally less formalistic and has less specific regulatory content than the GDPR. 
+Table 3.1 is taken from a blog post for Adnovum by Kücükkaya (2023) \cite{gdpr_comparison_nfadp} and summarizes the 7 major differences between the new FADP and GDPR. 
+An important example, unique to the nFADP is the personal liability of the individual rather than the legal body of the organization. 
+This may create stronger incentives to actually follow the principles because the person is responsible with their own money.\\
+
+\begin{table}[h]
+\centering
+\caption{Kücükkaya (2023): 7 major differences between the new FADP and GDPR}
+\begin{tabular}{p{2.5cm} p{5cm} p{5cm}}
+\hline
+\textbf{Topic} & \textbf{New FADP} & \textbf{GDPR} \\
+\hline
+Sanctions & Up to CHF 250,000 against responsible private persons (Article 60 nFADP) & Up to EUR 20 million or 4\% of the company's worldwide annual revenue \\
+\hline
+Designation of a Data Protection Officer & Not mandatory but recommended & Mandatory according to art. 37 GDPR. \\
+\hline
+Data breach notifications & Mandatory reporting as soon as possible & Mandatory reporting within 72 hours \\
+\hline
+Data exports & Adequacy is determined by the Swiss Federal Council. EU standard contractual clauses and binding corporate rules can be applied. & Adequacy is determined by the European Commission. Standard contractual clauses and binding corporate rules apply. \\
+\hline
+Data Protection Impact Assessment & Consultation of a Data Protection Officer instead of the FDPIC is possible in case of high risk despite measures taken. & Duty to consult the supervisory authority in case of high risk despite measures taken. \\
+\hline
+Profiling & General obligation to obtain consent is only imposed for high-risk profiling. & General obligation to obtain consent \\
+\hline
+Sensitive data & Includes the two additional categories «data on administrative or criminal proceedings and sanctions» and «data on social security measures». & According to art. 9 GDPR. \\
+\hline
+\end{tabular}
+\end{table}
+
+The Swiss approach to imposing fines is specified in Section \textit{5 Fees, Article 59 nFADP}, and \textit{Chapter 8 Criminal provisions Article 60 - 66 nFADP}. 
+With the layout of its fine structure for violations, Switzerland, unlike Europe, aligns with the findings of researchers. \\
+Scholars such as John C. Coffee, Jr. (1981) \cite{coffee1980no}\footnote{John C. Coffee, Jr., a prominent legal scholar and professor at Columbia Law School, is a leading voice in the debate over corporate criminal liability and the effectiveness of fines.}, in his seminal article "No Soul to Damn, No Body to Kick," argue that fines often fail to punish the guilty individuals, are simply absorbed by large companies as a business expense, and unfairly penalize innocent shareholders. 
+This suggests that the market views the fine as a one-time cost, not a fundamental blow to the company's integrity or future profitability. 
+He contends that large fines primarily punish the "innocent" shareholders, who may have been unaware of the misconduct, rather than the culpable executives and managers. 
+Coffee advocates for alternative sanctions, such as "equity fines" (forcing the corporation to issue new shares to the government) or mandatory corporate probation, to impose costs directly on shareholders and create a more meaningful deterrent without threatening the company's solvency.\\
+Lund and Sarin (2021) \cite{crime_and_punishment} provide an empirical look at the effectiveness of corporate fines. 
+Their "[\dots] results suggest that enforcers are unlikely to achieve optimal deterrence using fines alone. 
+Enforcement agencies should therefore consider other ways of securing deterrence, such as by seeking penalties against guilty individuals and the top executives who facilitate their crimes. \cite{crime_and_punishment}
+
+
+\subsubsection{The American Framework: NIST's Comprehensive Guidance}
+
+The U.S. National Institute of Standards and Technology (NIST) has established the foundational framework for zero trust architecture through Special Publication 800-207 \cite{NIST.SP.800-207}, published in August 2020, for guiding organizations implementing zero trust strategies.\\
+NIST defines zero trust as "an evolving set of cybersecurity paradigms that move defenses from static, network-based perimeters to focus on users, assets, and resources[\dots]." 
+The framework establishes seven core tenets that guide zero trust implementation. 
+To operationalize these principles, the framework uses three primary logical components: the Policy Engine (PE) which makes access decisions, the Policy Administrator (PA) which executes these decisions, and the Policy Enforcement Point (PEP) which enables, monitors, and terminates connections between subjects and resources. 
+As the authoritative standard for zero trust architecture, NIST SP 800-207 provides organizations with a vendor-neutral, comprehensive approach to implementing modern security strategies that protect resources regardless of their location or the network from which they are accessed.\\
+Many companies already implement this framework: \textit{Palo Alto Networks} was an official collaborator in the NIST SP 1800-35 project, and provides guidance for ZTA implementation. \cite{PAN_NIST_CSF_Fulfillment} 
+\textit{IBM's} publications reference NIST as an established model for building a Zero Trust Architecture. \cite{ibm} 
+\textit{Cisco's} Zero Trust solutions, particularly its Duo product, offer a five-phase roadmap for implementation that mirrors the phased maturity model advocated by NIST and CISA. \cite{cisco} 
+\textit{Cloudflare} explicitly refers to NIST SP 800-207 as the "definitive blueprint" for ZTA and maps its platform to NIST's architectural components.  \cite{Cloudflare}\\
+
+\subsubsection{Summary}
+
+The two regulatory frameworks, GDPR \& nFADP, and the NIST framework are complementary pillars of modern data security. 
+They address the challenge of security from both legal and technical standpoints. 
+While the European and Swiss regulations establish the legal obligations for protecting personal data, defining principles like ‘privacy by design’ and ‘data minimization’, the NIST framework provides an architectural blueprint for how to achieve this protection in a modern, perimeter-less environment. 
+Core Zero Trust tenets, such as enforcing least-privilege access and continuously verifying every request, can satisfy the ‘state of the art’ technical measures required by these laws. 
+This is not merely a technical alignment, as a compliance failure can lead to severe penalties. 
+Under GDPR, for example, a significant data breach can result in fines of up to €20 million or 4\% of a company's global annual revenue (up to 250 000 CHF for individuals in switzerland).
+
+\section{Blue Team Challenges}
+
+\subsection{Red Team vs. Blue Team}
+
+The common "Red Team vs. Blue Team" language oversimplifies the reality. 
+In a typical organization, the Red Team is a finite, project-based entity engaged for a specific assessment. 
+The Blue Team, in contrast, is not merely a team in a game; it is a proxy for the entire, continuous, and often under-resourced security operation. \cite{rentero} \\
+
+Red teams can consult a variety of methodologies for security penetration testing. 
+For example, guidance can be found in the PCI Data Security Standard's Penetration Testing Guidance \cite{pci-ptg}, the Penetration Testing Execution Standard (PTES) \cite{ptes}, the Open Source Security Testing Methodology Manual (OSSTMM) \cite{osstmm3} and the OWASP penetration testing methodologies \cite{owasp_wstg_methodologies}. 
+Government and regulatory bodies also provide key references, such as the NIST Technical Guide to Information Security Testing and Assessment (SP 800-115) \cite{nist-sp800-115} and the HIPAA Security Testing Guidance \cite{hhs-hipaa-cyber}. 
+To model attacks on real-world adversary behavior, red teams use the MITRE ATT\&CK framework \cite{strom2018attack} as a knowledge base of tactics and techniques. 
+For practical application, the Kali Linux operating system is a widely used platform that contains the necessary tools for these assessments.\\
+Adam, Widyawan and Putra (2023) \cite{litreviewredteam} reviewed multiple penetration testing frameworks, tools and application areas and found that OWASP, PTES, and other frameworks are widely used, confirming their popularity in academic research and professional practice. 
+They note the term "methodology" is often used but seems ambiguous. 
+Also, there is little literature that specifically discusses frameworks and methods for penetration testing. 
+An issue that also plagues the Blue Team. 
+Without guidance, the quality of security design and configuration becomes entirely dependent on the individual security architect's expertise, potentially leading to significant vulnerabilities when that expertise is inadequate.
+A security system that is done wrong with confidence can create a false sense of security, underscoring the urgent need for more research. 
+Adam, Widyawan and Putra conclude, exploring the combination of multiple frameworks and tools could lead to a new framework with more effective guidance. \\
+In their review they found the most prominent frameworks in descending order of use are: the (1) Open Web Application Security Project (OWASP) \cite{owasp_wstg_methodologies}, (2) the Penetration Testing Execution Standard (PTES) \cite{ptes}, (3) the Information Systems Security Assessment Framework (ISSAF) \cite{issaf_framework_2005}, (4) the Open Source Security Testing Methodology Manual (OSSTMM) \cite{osstmm3}, and the (5) National Institute of Standards and Technology (NIST) Cybersecurity Framework. \cite{nist_sp_800-115} \\ 
+Blue teams are challenged with interpreting regulatory requirements to build a security architecture that is both compliant and functional, often with no clear guarantee of success.\\
+A decade-old challenge in network management is the lack of a concise and standardized language to define middlebox\footnote{In computer networking, a middlebox is a device that intercepts and manipulates data flows between two endpoints. 
+Its purpose is to provide services such as inspection, filtering, or transformation of traffic, rather than simply forwarding packets. 
+This category includes essential network functions like firewalls, Network Address Translators (NATs), load balancers, and Deep Packet Inspection (DPI) devices. \cite{wiki:Middlebox}} 
+This absence of a common descriptive framework makes their correct usage difficult.\\ 
+To address this issue, Joseph and Stoica (2008) \cite{joseph2008modeling} proposed a foundational solution. 
+They introduced a middlebox model designed to succinctly and formally describe how different middleboxes process packets. 
+To demonstrate the model's utility and breadth, they illustrated its application by representing several common middleboxes prevalent at the time, such as firewalls and NATs. 
+Sherry et al. (2012) \cite{sherry2012making} argue that middlebox infrastructure is often expensive, complex to manage, and a source of network failures. 
+To address these drawbacks, they propose outsourcing middlebox processing to the cloud, aiming to leverage the cloud's inherent benefits of cost-efficiency, simplified management, and fault tolerance. 
+The authors acknowledge, however, that migrating these services is challenging, as it requires maintaining functional equivalence and high performance without increasing network complexity. 
+They introduce APLOMB, a practical system designed to realize the outsourcing of enterprise middlebox processing to a cloud environment\\
+
+Implementing ZT principles can help in compliance with regulations like the GDPR and nFADP, particularly with their "Privacy by design" requirements. 
+However, this does not mean every company must implement a full Zero Trust architecture. 
+Not all organizations need to comply with every regulation.\footnote{See GDPR, supra note 14, at art. 27(2).} \cite{houser2018gdpr}
+Many, including Kindervag, the founding father of ZT, mention that ZT is a long process and has to be implemented gradually. 
+See \cite{kindervag2010build} and \cite{kindervag2010zero} for Kindervag's original Zero Trust implementation.
+A tough challenge for Blue Teams, particularly during a gradual implementation, is the proliferation of disparate security tools\footnote{The \textbf{proliferation of disparate security} tools, often termed "security tool sprawl," refers to the accumulation of numerous, unintegrated security solutions from various vendors, leading to increased complexity, operational inefficiencies, and potential security gaps \cite{tool_sprawl}}. 
+As Microsoft notes, "Many organizations use various legacy solutions stitched together. 
+These solutions often don’t work together seamlessly, exposing infrastructure gaps and increasing operational costs" \cite{Microsoft2024}. 
+It is crucial to minimize the number of additional software and hardware solutions to reduce management complexity, as every new technology introduces an additional attack surface.\\
+security everytime is a tradeoff. on both sides 
+
+While Red Teams often follow prescribed offensive methodologies and playbooks, Blue Teams must construct their defensive strategy by integrating a broader set of resources, such as industry frameworks, guiding heuristics, and regulatory requirements. 
+Fortunately, a growing body of literature and official guidance provides structured frameworks for this purpose.
+For instance, comprehensive guidance is available from U.S. federal agencies, including the frameworks developed by the National Institute of Standards and Technology (NIST), and the Cybersecurity and Infrastructure Security Agency (CISA), which offers specific roadmaps for a gradual Zero Trust implementation \cite{CISA}. 
+Beyond governmental resources, foundational strategies are detailed in technical books like Zero Trust Networks: Building Secure Systems in Untrusted Networks. 
+The field also continues to evolve with contributions from recent academic research, such as the work by Rais et al. (2024), which offers contemporary implementation strategies for security professionals \cite{rais2024zero}.
+
+\subsection{Blue team and Compliance}
+
+Beyond technical data protection, a primary challenge for Blue Teams is ensuring compliance with a wide array of laws and regulations, where failure can result in substantial financial penalties. 
+Notable examples of large GDPR fines include:
+
+\begin{enumerate}
+    \item \textbf{Meta Platforms Ireland Ltd.} (\textit{€1.2 billion, 2023}): Mishandling personal data transfers between Europe and the US, in breach of GDPR Art. 46(1) \cite{bbcnews2023}.
+    \item \textbf{Amazon Europe} (\textit{€746 million, 2021}): Non-compliance with general data processing principles related to its use of customer data for targeted advertising \cite{techcrunch2021amazon}.
+
+    \item \textbf{TikTok} (\textit{€530 million, 2025}): Transferring European users' personal data to servers in China without ensuring equivalent protections, in breach of GDPR Art. 13(1)(f) and Art. 46(1) \cite{tiktok}.
+\end{enumerate}
+
+The magnitude of these fines suggests the critical importance of achieving and maintaining regulatory compliance. 
+To help navigate this complex landscape, organizations may find value in the numerous compliance guides published by regulators and industry experts. 
+Additionally, some organizations choose to engage external consultants, who can offer specialized expertise in implementing and validating compliance frameworks.\\
+Some researchers have studied the practical challenges of GDPR, proposing structured approaches for its implementation. 
+One contribution in this area comes from Almeida, Mira da Silva, and Pereira (2021), who identified the ten most critical enablers and barriers to a successful GDPR rollout. 
+Table 3.2, adapted from their paper, lists these findings, which highlight crucial organizational factors from top-level management support to the existing company culture \cite{critical_success_factors}.\\
+
+Beyond these organizational enablers, the practical steps for achieving technical compliance are also well-defined. Houser (2018), for example, in his timely analysis work for U.S. companies, outlines a foundational approach that begins with robust data governance, such as appointing a Data Protection Officer (DPO), reviewing all personal data to establish a lawful basis for its retention, and meticulously documenting user consent. \cite{houser2018gdpr}
+
+\begin{table}[ht]
+\centering
+\caption{Almeida, Mira da Silva, Pereira (2021): Critical success factors of GDPR implementation}
+\label{tab:gdpr_factors}
+\begin{tabular}{r p{5.6cm} p{5.6cm}}
+\hline
+\textbf{Rank} & \textbf{Enablers} & \textbf{Barriers} \\
+\hline
+1 & Top management sponsorship and involvement & Lack of management commitment and support \\
+2 & Risks identification & Change resistance \\
+3 & Data protection and security policies & Lack of security practices \\
+4 & Collaboration between IT and Legal Departments & Lack of budget \\
+5 & Security measures and mechanisms & Lack of privacy knowledge and expertise \\
+6 & Organizational culture & Organizational culture \\
+7 & Enterprise engagement & Data availability/accessibility \\
+8 & Data Protection Impact Assessments & Lack of required technology \\
+9 & Training awareness & Lack of human resources \\
+10 & Right level of technology & Poor compliance assessment \\
+\hline
+\end{tabular}
+\end{table}
+
+Successful cybersecurity implementation also relies on avoiding common pitfalls. 
+Guidance from security agencies can be invaluable. 
+Through their Red and Blue team assessments, hunt operations, and incident response activities, the NSA and CISA identified the ten most common network misconfigurations that increase vulnerability \cite{nsa_cisa_2023}.\\
+
+\begin{table}[ht]
+\centering
+\caption{NSA and CISA: Top ten cybersecurity misconfigurations} % TODO: Replace with your desired caption
+\label{tab:common_misconfigurations} % Optional: for cross-referencing
+\begin{tabular}{r p{12cm}}
+\hline
+\textbf{No.} & \textbf{Common Misconfiguration or Vulnerability} \\
+\hline
+1 & Default configurations of software and applications \\
+2 & Improper separation of user/administrator privilege \\
+3 & Insufficient internal network monitoring \\
+4 & Lack of network segmentation \\
+5 & Poor patch management \\
+6 & Bypass of system access controls \\
+7 & Weak or misconfigured multifactor authentication (MFA) methods \\
+8 & Insufficient access control lists (ACLs) on network shares and services \\
+9 & Poor credential hygiene \\
+10 & Unrestricted code execution \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent \textbf{Summary}\\
+\\
+Our review of common practices and heuristics reveals that many employ similar approaches to security, often focusing on securing the system and protecting its services. 
+This is not wrong per se if done carefully, but we argue that making data protection and understanding its value the central organizing principle makes for a more robust security approach. 
+Furthermore, effective data protection should encourage the development of policies from the outset of the design of the system to achieve regulatory compliance.\\
+The NIST Cybersecurity Framework treats data protection as one component within a broader security architecture, focusing on service-level security implementations and procedural controls. 
+In contrast, the GDPR and reworked Swiss regulatory guidelines (nFADP) position data protection as a foundational element that must inform system design decisions from conception and principles to legal mandates for privacy by design and by default. 
+Despite these mandates, however, researchers suggest that Article 25(1) of the GDPR and its privacy by design provision has been reduced to a mere catch-all reminder to comply with other GDPR requirements, failing to realize its potential to embed privacy protections into technological architecture and organizational culture from the ground up. \cite{waldman2021data} 
+Successful cybersecurity implementation also relys on following certain principles. 
+Especially when creating a methodology it is important not to make the same mistakes as other people did before. 
+There is researchers and publishers that point out mistakes and give guidance for the blue teams. 
+For example the CIA misconfigurations to avoid. \cite{nsa_cisa_2023} \\
+\\
+Implicitly secret service agencies play a cruitial role in the cyber security world. 
+The NSA and CISA identifies ten common network misconfigurations that can lead to an increased attack survace and hence more vulnerability. 
+For example Through NSA and CISA Red and Blue team assessments, as well as through the activities of NSA and CISA Hunt and Incident Response teams, the agencies identified the following 10 most common network misconfigurations. 
+NSA and CISA state that "these misconfigurations illustrate [\dots] a trend of systemic weaknesses in many large organizations, including those with mature cyber postures[\dots]. \cite{nsa_cisa_2023}
+
+
+

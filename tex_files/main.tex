@@ -1,0 +1,53 @@
+\documentclass[mscthesis]{usiinfthesis}
+\usepackage{lipsum}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage[dvipsnames]{xcolor}
+
+\newcommand{\fixme}[1]{\color{red} FIXME: #1 \color{black}}
+
+\title{Blue Team Methodology}
+\subtitle{A data-centric approach to cyber security}
+
+\begin{document}
+
+\maketitle %generates the titlepage, this is FIXED
+
+\begin{abstract}
+
+This research proposes a novel, data-centric approach to cyber security and is intended to bridge the gap between abstract theory and practical application. 
+Grounded in a literature review of trends such as deperimeterization, zero trust, and key regulations (GDPR, nFADP), this work's primary innovation is its prioritization of data classification based on the determined data value. 
+Unlike traditional service oriented approaches, this methodology dictates that all subsequent security decisions, from network topology to encryption protocols, are derived directly from an asset's assessed value. 
+While foundational, the methodology's generalizability is limited by the current research sample. 
+Future work will focus on developing more sophisticated data valuation models, creating detailed, actionable implementation guides, and securing a formal legal review to ensure regulatory compliance. 
+This thesis establishes a practical foundation for continued research and invites community collaboration to further develop this methodology. 
+This project was carried out in collaboration with the Swiss Innovative Arts \& Technologies Institute and will be published intended as an open source methodology  on GITHUB, so security professionals around the world can use it or enhance it. 
+  Questions, comments and ideas for extension can be sent to: \\
+\\
+\url{blue.team.methodology@protonmail.com}
+\end{abstract}
+
+\tableofcontents 
+\listoffigures
+\listoftables
+
+\mainmatter
+
+\input{OSBTM_WIP/intro}
+\input{OSBTM_WIP/interviews}
+\input{OSBTM_WIP/literature_rewiev}
+\input{OSBTM_WIP/methodology}
+
+\appendix
+
+\backmatter
+
+\bibliographystyle{plainnat}
+\bibliography{biblio}
+
+\end{document}

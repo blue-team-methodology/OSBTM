@@ -1,0 +1,1238 @@
+\chapter{Blue Team Methodology}
+
+\textit{The methodology aims to provide organizations with a foundation to enhance their security posture and work toward regulatory compliance. 
+Although these guidelines support GDPR alignment and other regulatory frameworks, achieving full compliance requires careful consideration of each organization's unique circumstances, legal requirements, and operational context. 
+This framework serves as a comprehensive starting point for building resilient security practices, but organizations must undertake their own detailed compliance assessments and implementations based on their specific needs and regulatory obligations.}
+
+\section{Theoretical Framework}
+
+Developing a security methodology is a formidable task. 
+IT systems have grown to become highly complex, and securing an organization's infrastructure requires a solid understanding of distributed systems. 
+System administrators and security experts must navigate a vast landscape of concerns to effectively protect organizational data assets.
+Today, when we are discussing a company's IT infrastructure, most of the time we are essentially describing a distributed system. 
+Consequently, when we attempt to enhance an organization's cyber security, we should think about how to protect a distributed system. \\
+\\
+\textit{What is a distributed system?} A distributed system is a collection of autonomous computing elements (nodes) that collaborate to present themselves to users as a single, coherent system. 
+The primary challenge in distributed systems lies in orchestrating effective collaboration among these diverse, independent nodes, regardless of their types or interconnection methods. 
+From a cybersecurity perspective, this creates a complex attack surface with multiple vectors for exploitation. 
+Adversaries can exploit the autonomy of individual nodes or compromise the trust relationships required for collaboration. 
+They can manipulate the communication channels between nodes. 
+Perhaps most concerning, they can leverage the heterogeneity and distributed nature of the system to hide malicious activities while appearing as legitimate system behavior to users. 
+This is what we need to prevent. 
+Cybersecurity professionals must work to minimize both the attack surface and the number of available attack vectors in order to ensure confidentiality, integrity and availability (see CIA triad \cite{samonas2014cia})
+
+We will begin with understanding well-established design principles for distributed systems. 
+This provides us with essential context for security implementation. 
+These principles should define requirements that any functional system should meet. 
+In the worst case, security measures that violate these principles will render the system unusable, regardless of how secure it becomes. 
+We should recognize that it is impossible to have a perfectly secure system that is also 100 percent efficient. When implementing security measures, system administrators usually need to make careful tradeoffs between efficiency and security. 
+Van Steen and Tanenbaum \cite{steen2017distributed} define three design goals for distributed systems. 
+\begin{itemize}
+    \item \textbf{Openness}: The system should be easy to integrate with other systems
+    \item \textbf{Scalability}: It should be easy to make the system “bigger”
+    \item \textbf{Transparency}: It should be easy to use the system (hide the distributed nature of the system from its users)
+\end{itemize}
+
+Recalling these while planning an IT system can help to choose the right trade-off. 
+Ideally, cybersecurity practices should aim for similar goals: \textbf{Openness}: Security mechanisms should use standardized protocols and APIs that allow seamless integration with diverse security tools, monitoring systems, and third-party services. 
+This means implementing security frameworks that support common standards. 
+\textbf{Scalability}: Security controls must automatically adapt to system growth without degrading performance or creating bottlenecks. 
+This involves designing security architectures that can handle increasing numbers of nodes and users. 
+Finally, \textbf{Transparency}: Security implementations should provide clear visibility into their operations without obscuring system functionality or creating user friction. 
+This means implementing comprehensive audit trails, real-time security dashboards, and clear security policies that users can understand. 
+Security measures should operate seamlessly in the background. 
+Meanwhile, administrators need appropriate visibility into threats, access patterns, and system health.
+\\
+The following sections aim to build relevant cybersecurity understanding. 
+Rather than immediately diving into security contols and technical implementations, we first establish base knowledge for each topic area. 
+This enables us to  understand not just \textit{what} security measures to implement, but \textit{why} they are necessary and \textit{how} they interact with the system operations. 
+Once we understand the basics, we start developing a data-centric methodology that places information assets at the core of our security strategy. 
+While our initial exploration does not focus on data specifics, the resulting methodology explicitly centers on data protection - examining the complete data lifecycle, categorizing different types of data based on sensitivity and regulatory requirements, understanding data flows across organizations, and implementing controls appropriate to each data state (at rest, in transit, and in use). 
+
+\subsection{Balancing Trade-offs and Pitfalls in distributed system design}
+
+Balancing the trade-offs between these three design goals illustrates that organizational security requires a system approach where decisions are inherently interdependent. 
+The challenge lies in implementing security that work within operational constraints without compromising efficiency. 
+Organizations cannot afford security measures that significantly impair productivity or inflate operational costs beyond market norms.
+Consider, for example, a critical financial database containing sensitive transaction records. 
+While maximum security might suggest air-gapping the system and restricting physical access to a handful of authorized personnel, such measures would make real-time transaction processing, fulfilling regulatory reporting requirements, and distributing team access very difficult and inefficient. 
+Data must remain accessible to authorized users across multiple locations, support concurrent operations, and integrate with various business systems — all while maintaining stringent security controls.
+
+Now that we understand the need to consider the system as a whole, we can examine the common pitfalls that arise when this holistic perspective is overlooked. 
+Even experienced engineers can fall into predictable traps during the design process, making assumptions that seem reasonable in isolation but prove problematic when the system operates at scale across distributed environments.
+Peter Deutsch, working at Sun Microsystems\footnote{Sun Microsystems (1982-2010) was an American technology company focused on computer hardware, software, and IT services before being acquired by Oracle.\cite{Sun_Microsystems}} and others at the time, identified eight fundamental misconceptions that plague distributed system design.\cite{steen2017distributed}
+These fallacies represent the most frequent blind spots that developers encounter when transitioning from single-machine thinking to distributed architectures. 
+When we reinterpret these fallacies through a cybersecurity lens, they reveal critical assumptions that can undermine security implementations in distributed environments. 
+A perimeter-based security model operates under the assumption that threats primarily originate from external sources, with a clear boundary between "trusted" internal systems and "untrusted" external networks. 
+However, "assume breach" architectures acknowledge that threats can emerge from any location - whether external attackers who have breached the perimeter, malicious insiders, or compromised internal systems. 
+While not all of Deutsch's original fallacies directly translate to cybersecurity challenges, several prove particularly relevant when designing security for distributed systems. 
+Moreover, the unique human element in cybersecurity, where employees represent both critical assets and potential vulnerabilities, introduces an additional pitfall that distributed computing frameworks typically do not directly address. 
+We decided to add this critical dimension to the list. 
+Below, are pitfalls that system architects should consider when designing (\textit{security}) architectures for distributed systems:
+
+\begin{itemize}
+    \itemsep0em
+    \item The network is reliable
+    \item The network is secure
+    \item The topology does not change
+    \item Latency is zero
+    \item Bandwidth is infinite
+    \item Transport cost is zero
+    \item There is one administrator
+    \item \textbf{Employees have adequate security awareness} 
+\end{itemize}
+
+Each of these assumptions can lead to security vulnerabilities when left unaddressed. 
+For instance, assuming network reliability can result in inadequate redundancy planning for security controls, while assuming network security can lead to insufficient encryption and monitoring of internal communications. 
+The final pitfall, overestimating employee cybersecurity knowledge, represents perhaps the most critical vulnerability in modern distributed systems, where human error consistently ranks as the one of the leading causes of security breaches. 
+Organizations that fail to account for varying levels of security awareness among their workforce often discover that  sophisticated technical controls are undermined by simple human mistakes, such as falling victim to phishing attacks or mishandling sensitive data. 
+>> We should emphasize once more that, according to Verizon's 2025 data breach investigations report, around 60 percent of breaches involved a human element.\footnote{While all incidents involve humans to some degree, Verizon's classification distinguishes cases where human action served as a "gating factor" from fully automated exploit chains. Human involvement includes instances where organizational personnel unintentionally facilitated breach progression through actions such as responding to social engineering attempts, clicking malicious links, visiting compromised websites, or otherwise enabling unauthorized access that would not have occurred through purely automated means.\cite{verizon_dataBreach}} <<  \cite{verizon_dataBreach} \\  
+Given these pitfalls we must acknowledge that distributed systems operate in an inherently unreliable environment\footnote{compare Literature review - from de-perimeterization to zero-trust} where failures do not represent exceptional events, but expected behavior. 
+Network partitions are necessary, administrators will make mistakes, employees will click malicious links, and system components will fail.\\
+
+We're not the first engineers to learn this lesson. 
+Aerospace engineers figured this out the hard way when trying not to kill test pilots with rocket sleds. 
+They quickly realized that anticipating failures was not just good practice, getting it wrong meant people would die. 
+Their harsh reality gave us Murphy's Law\footnote{Murphy's Law originated from a 1949 U.S. Air Force experiment at Edwards Air Force Base, where Captain Edward Murphy Jr., a West Point graduate and WWII veteran, discovered that critical G-force sensors had all been wired backwards. His frustrated observation, "If there's any way these guys can do it wrong, they will," was later popularized by project lead Lt. Col. John Stapp as \textbf{"Murphy's Law: if anything can go wrong, it will."} Stapp, the overall commander of the project, credited their success in avoiding injuries during dangerous rocket sled experiments to assuming worst-case scenarios and planning accordingly. This principle of defensive thinking, always anticipating failure modes and preparing for them, can be used as a fundamental heuristic for both engineering and cybersecurity practices.\cite{murphy}}. 
+The principle of preventive thinking will also guide us in designing and building the appropriate security mechanisms. 
+Another good way to ensure we are developing a system that works in practice is to follow the notion of dependable systems. 
+Kopetz and Verissimo \cite{kopetz1993realtime} describe \textbf{dependable information systems} as systems that are: 
+
+\begin{itemize}
+    \itemsep0em
+    \item \textbf{Available} (the property that a system is ready to be used immediately. A highly available system will be online at any given time)
+    \item \textbf{Reliable} (system can run continuously without failure )
+    \item \textbf{Safe} (when the system temporarily fails to operate correctly, no catastrophic event happens)
+    \item \textbf{Maintainable} (how easy can a failed system be repaired/recovered/) 
+\end{itemize}
+
+Again, lets apply a cybersecurity lens and think about what it means for security architectures. 
+For each of these bullet points we will identify its meaning for cyber security. \\
+\\
+We need to keep \textbf{availability} in mind and think about how to keep the system running even in the presence of malicious actors. 
+Of course the general idea is: we want to avoid incidents. 
+But as mentioned earlier, it is unlikely that any security policy will ever provide full protection from attacks and mitigate every possible attack vector (present and future), hence the complexity of the topic and its ever-evolving nature. 
+Thinking about availability can help in identifying key resources in the system and in understanding what is really important. 
+Consider for example Security Information and Event Management (SIEM) systems. 
+If attackers successfully access logging and monitoring capabilities, they effectively blind defenders and can hide their malicious actions. 
+Addressing availability we might stat asking the following basic questions: What happens to our security if this control goes offline? 
+Or, Which security components must stay up no matter what? etc\dots \\
+\\
+\textbf{Reliability} requires security controls to perform consistently across the organization varying operational conditions. 
+This does not mean the same measures are applied for every case but more that we can rely on them. 
+The system needs to be protected in multiple situations.  
+This is fairly challenging and when trying to achieve reliability it is important to keep the common pitfalls described earlier in mind. 
+We could ask questions like: Do our security controls cover the whole system? 
+Do our controls work consistently across all network conditions? etc\dots\\
+\\
+\textbf{Safety} in security architecture means that when controls fail, they must not introduce cascading vulnerabilities or create new attack vectors. 
+This brings us to an important design decision: how should systems behave when security mechanisms encounter failures?
+We must choose between two basic approaches: \textit{fail-open} or \textit{fail-closed}.
+\begin{itemize}
+    \item \underline{\textit{Fail-open systems}} prioritize availability over control and continue operating even when security checks cannot be completed
+    \item Conversely, \underline{\textit{fail-closed systems}} prioritize control over availability, halting when security validation is uncertain.
+\end{itemize}
+
+\noindent 
+
+\noindent Neither approach is universally correct; the decision depends entirely on the system's purpose and risk tolerance.
+In data contexts this means, if a security measure fails, or a breach is realized, a fail-closed system should stop unauthorized access to exposed data immediately and enable system administrators to control who can access and to trace what happened. 
+When critical data is exposed, it is important that the malitious action is stopped immediately. 
+E-commerce platforms might fail-open to maintain sales continuity, accepting temporary security degradation over lost revenue. 
+Healthcare or financial systems on the other hand might choose fail-closed, as the consequence of unauthorized access far outweights temporary unavailability. \\
+A good example for a fail-close system is Googles Safe Removal Service. 
+It "[...] evaluates disruption intentions and determines whether these disruptions should proceed or not. 
+For example, rebooting a machine is an intention that must be validated by this service before allowing the actual reboot." 
+If one of its critical dependencies is unavailable and the system can not make a fully informed decision, it fails-closed by rejecting the request. 
+Regardless of the approach, clear communication is key! 
+A fail-open system should not hide underlying issues that could lead to catastrophic failures, and a fail-closed system must provide clear signals explaining why requests were rejected. \cite{fail_open-fail_closed} 
+Key questions for designing safe failure modes may include: For each security control, what is the appropriate failure mode? 
+What are the downstream consequences if this control fails in either direction? 
+Can we implement graduated responses (partial degradation) rather than binary failure modes? 
+What monitoring ensures we detect when controls are operating in degraded states? 
+How do we ensure failed security measures don't create new vulnerabilities? etc\dots \\
+\\
+\textbf{Maintainability} represents where theoretical security design meets operational constraints. 
+This is where we face reality. 
+Teams need to patch vulnerabilities, update security rules, and respond to incidents—all without bringing down production systems. 
+Highly distributed architectures amplify these challenges significantly. 
+However, maintainability extends beyond only patching cycles. 
+It includes knowing what's running where, maintaining accurate asset inventories, and understanding system dependencies. 
+It is important to keep in mind: you cannot secure what you don't know exists. 
+Maintainability for example, also includes the proper management of privileged accounts. 
+Research shows that priviledged accounts typically outnumber employees by 3-5x. 
+Especially administrator accounts that provide access to critical assets, such as Active Direcroty domain controllers and other high-level AD domains require robust protection mechanisms.\cite{cyberark_assume_breach}\\
+
+All properties reinforce each other. 
+Skip availability and your controls disappear under pressure. 
+Ignore reliability and inconsistent enforcement creates exploitable gaps. 
+Forget safety and failures may cascade into breaches. 
+Neglect maintainability and might have a hart time adapting to new threats. 
+As mentioned earlier, the distributed nature of modern infrastructure does not make things easier - what works for a single server falls apart when you're managing thousands of nodes across multiple regions, each with their own latency, failure modes, and trust relationships if not carefully planned out. 
+
+\subsection{Policy, Mechanism, Assurance and Incentive}
+
+
+Two approaches white list everything is blocked explicitly say who can access and who can acceess files
+
+Black list it is the inverse.
+white list approacbh is more resilient 
+
+
+Now let us take the idea of dependable information systems one step further and expand it to our security domain. 
+Anderson introduces to his book "Security Engineering" \cite{secuity_engineering} with presenting a  security analysis framework for dependable systems (see figure \ref{security_framework}). 
+This foundation allows us to think about what makes a security system actually work in the real world. 
+Of course, we need to have the right security mechanisms in place in order to protect what is ours and what we don't want others to get. 
+So if we have data on a server, nobody that is not allowed should be able to access it. 
+If we process credit card transactions, we need to ensure that payment information remains confidential during transmission. 
+When employees work remotely, we must verify their identity before granting access to company resources. 
+If we store medical records, we need to guarantee both their integrity and availability - doctors must be able to access accurate patient data when needed, while keeping it hidden from unauthorized eyes.\\
+\\
+But here is the thing - you can have the most sophisticated encryption algorithms and the fanciest firewalls, but if your CEO writes their password on a sticky note and leaves the door to his office open, you've got a problem. 
+This is why we need to think about security through a broader lens first. 
+Anderson explains that for building a \textbf{dependable system}, four things need to come together:
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=60mm]{USIINFMScThesis/attachments/security framework.png}
+\caption{Security Framework \label{security_framework}}
+\end{figure}
+
+Policy defines what you're supposed to achieve. 
+Mechanism encompasses the ciphers, access controls, hardware tamper-resistance and other machinery to implement the policy. 
+Incentives represent the motive that people guarding and maintaining the system have to do their job properly, and also the motive that attackers have to try to defeat your policy. 
+Finally, Assurance captures the amount of reliance you can place on each particular mechanism, and how well they work together. 
+All of these dimensions interact and influence each other. \cite{secuity_engineering} 
+We will use this four-dimensional framework to think about each security building block. 
+We can think of these dimensions as different perspectives that, when combined, should give us a good understanding of how to safely use our building blocks for cyber defense and how to implement them effectively.\\
+
+
+For our work, we expand Anderson's framework to include regulatory considerations that are particularly relevant to our methodology (see figure \ref{security_framework}). 
+When we discuss Policy, we include not only general organizational objectives but also regulatory requirements such as GDPR, NIST frameworks, and nFADP regulations. 
+These regulations have become integral to how security systems  need to be designed and implemented.
+Additionally, we note that Assurance requirements are increasingly codified in regulations. 
+The General Data Protection Regulation (EU) 2016/679 (GDPR), Article 24, for example, requires controllers to "[...] implement appropriate technical and organisational measures to ensure and to be able to demonstrate that processing is performed in accordance with this Regulation. [...]" \cite{thisis} 
+This means that demonstrating the effectiveness of security measures is a regulatory requirement and should therefore be taken serious to prevent fines.\\
+\\
+\noindent We work with the following understanding of the four dimensions:
+
+\textbf{Policy} encompasses both organizational security objectives and applicable regulatory requirements. 
+Once a security policy has defined which actions the entities in a system are allowed to take and which ones are prohibited, Mechanisms cover the technical and procedural controls that are implemented. 
+An entity in the system could be data, users, services, machines, and so on \cite{steen2017distributed}.\\
+
+Once the policies are established, we can address the security \textbf{mechanisms} required to enforce these policy directives. 
+Van Steen and Tanenbaum \cite{steen2017distributed} describe four important security mechanisms:
+
+\begin{enumerate}
+    \itemsep0em
+    \item Encryption
+    \item Authentication
+    \item Authorization
+    \item Auditing\footnote{\textit{Auditing as a security mechanism}\: Auditing can serve as a critical mechanism within this framework, providing detailed traces of client access patterns and system interactions. While auditing does not directly prevent security threats, comprehensive audit logs prove invaluable for post-incident analysis and forensic investigation. These records enable organizations to understand breach methodologies and implement targeted countermeasures against identified attack vectors. The mere presence of robust logging capabilities also creates a deterrent effect, as attackers typically seek to minimize traceable evidence that could expose their identity or methods. In this way, comprehensive auditing transforms attacking into a higher-risk endeavor, supporting the overall security posture through both detective and deterrent functions. (See more in XXX LOG)}
+\end{enumerate}
+
+\textbf{Assurance} addresses both the reliability of mechanisms and the demonstration of their effectiveness as required by regulations. 
+One component of assurance is the deployment of auditing tools, that trace which clients accessed what, and in which way. 
+Although auditing does not directly provide protection against security threats, audit logs prove extremely valuable for analyzing security breaches and subsequently implementing countermeasures against intruders. 
+Protecting the audit infrastructure is crutial, as attackers are generally keen to avoid leaving traces that could lead to exposing their identity, and therefore usually also attack LOG servers or Security Information and Event Management (SIEM) directly.\cite{steen2017distributed}\\
+
+\textbf{Incentives} contribute to the decision whether people choose secure or insecure behaviors. 
+They are the hidden forces that decide whether security policies work or get ignored. 
+Once the appropriate policies and mechanisms are selected, we must ensure our users actually follow them. 
+Their success depends on employees becoming active defenders rather than potential vulnerabilities. Essentially, employees need to be turned into a "Human firewall".\cite{kpmg2023human} 
+This requires educating users to develop both cybersecurity knowledge and security intuition. 
+Organizations must lay out secure pathways that employees can navigate with confidence. 
+However, simply providing these secure options is not enough.
+We must design them to be the natural, preferred choice for users.\\
+Ideally, a secure path should always be the easiest path. 
+While this idea is difficult to achieve in practice, systems should be designed to guide users toward correct decisions by making secure options the most convenient and intuitive choices.
+"A truly effective cybersecurity strategy doesn’t just block attacks; it anticipates and adapts to human behavior. [\dots] Aligning security measures with natural human tendencies [\dots] works better than relying on users to remember overly complex protocols."\cite{author2024hacking}\\
+Consider the common scenario where an employee needs to transfer data between machines: without proper incentives, they might use a personal USB drive brought from outside. 
+This can introduce malware risks and create untracked data movement. 
+The right incentive structure would provide dedicated, convenient, secure channels for data transfer that are faster to use than USB drives, perhaps through a drag-and-drop interface or secure e-mailing options. 
+An additional approach to incentivizing users to follow privacy policies is educating about the true value of the data they manage. 
+Based on understanding the true data value, users should have intrinsic incentives to protect data. 
+The principle "you can only protect what you know exists" applies in this context as well. 
+We need to build a clear understanding for the value of different kinds of data. \\
+The Nudge theory, developed by Thaler and Sunstein in 2008 \cite{thaler2008nudge}, roots in behavioral economics and provides one way of giving incentives to users by gently guiding them toward desired choices. 
+It says that our behaviour can be successfully influenced through “soft” interventions. \cite{mills2023nudge}
+One example of such soft intervention is an ATM that dispends cash only afer the the user takes back his debit card. 
+Techniques like this help avoid a tick-box\footnote{Tick-box culture refers to organizational environments where leadership prioritizes demonstrating regulatory compliance through documentation and formal procedures rather than implementing meaningful practices that achieve the actual goals of those regulations. \cite{corporategovernanceinstitute2024tick}} culture, where leaders are more concerned with following rules and showcasing achievements on paper instead of in practice. \cite{nudging} 
+Instead we should embrace an organizational culture, that creates and appreciates company-wide privacy values. \cite{waldman2021data} 
+A culture of psychological safety within an organization might also encourage employees to address security concerns proactively. 
+Proactive risk identification and the feeling of a shared security responsibility significantly strengthen a companies security posture. \cite{author2024hacking} 
+"[\dots] Training and awareness programs that incorporate psychological insights are far more impactful than traditional "box-ticking" sessions [\dots]"\cite{author2024hacking}. 
+The principles of the Nudge Theory and other Incentive mechanisms should guide employees toward safer practices.\\
+Research demonstrates that educating employees about cybersecurity significantly improves organizational security posture. 
+A 2015 report from Wombat Security Technologies and the Aberdeen Group revealed that investments in user awareness and training effectively change behavior and quantifiably reduce security-related risks by 45 to 70 percent.\cite{wombat2015research} 
+Despite this compelling evidence, companies continue to underestimate the importance of cybersecurity education. 
+Our exploratory study showed this concerning gap once more - recall that out of seven respondents, no one stated they conduct regular security education for employees. 
+Given these findings, this oversight cannot be accepted, and companies must prioritize security awareness initiatives to address one of the most dangerous attack surfaces of all: the human element.\\
+
+
+\subsection{Protecting from the ground up: Defense-in-Depth and the OSI Model}
+
+We can think about security \textit{from the ground up} by analyzing the renowned Open Systems Interconnection (OSI) model introduced by the International Standard Organization (ISO). \cite{iso7498-1-1994} 
+This approach enables us to adopt a defense-in-depth mindset that covers all seven layers of network communication. 
+By building multiple security barriers across these layers, we ensure that even if attackers successfully breach one defensive measure, they still run into additional obstacles at other levels, significantly reducing the risk of a complete system compromise. 
+From an economic perspective, this strategy helps organizations avoid substantial financial penalties associated with major data breaches, such as potential fines in article 83(5) GDPR up to 4\% of annual global turnover (the maximum fine under the swiss new federal act on data protection is outlined in Article 60 - 63 nFADP \cite{nFADP} and can reach a fine up to 250.000 Swiss francs). \cite{thisis}
+
+\subsubsection{Defense in Depth}
+
+Originally developed for military strategy, this foundational security principle has since been adopted across a diverse spectrum of critical sectors, including the nuclear and chemical industries, Information and Communication Technology, and transportation.\\
+The principle was formally defined within the nuclear industry and elaborated upon by the International Nuclear Safety Advisory Group (INSAG) in two key publications. 
+The 1996 report, INSAG-10, is the dedicated publication providing a detailed conceptual framework specifically for Defense in Depth as a standalone principle \cite{did2}. 
+In contrast, the subsequent 1999 report, INSAG-12, presents a broader set of fundamental safety principles, situating Defense in Depth as one essential component within a more comprehensive, integrated safety culture \cite{did}.\\
+The concept of defense-in-depth (DiD) intendes to slow the progression of an attack and preserve defensive effectiveness, rather than attempting to halt it at a single line. 
+Initially, DiD was viewed as a set of independent physical barriers, such as fortifications and troops, arranged in successive layers instead of concentrating all resources on one front \cite{chierici2016evolution}.\\
+The central idea is the implementation of multiple, independent lines of defense \cite{did}. 
+This layered framework aims to reduce the risk related to an adverse scenario so that if one line of defense were to fail, the next one can still guarantee the required safety functions \cite{did2}. 
+Therefore, the main objective of a DiD strategy is to compensate for the failure of one or more defenses, ensuring that the overall risks are maintained at an acceptable level \cite{chierici2016evolution}. 
+Even these early publications included the human factor and training for plant personnel. 
+In article 64 under 3.3 Means of achieving operational safety, "\textit{The human factor and training of} [nuclear] \textit{plant personnel}", the INSAG describes: "While human error bears a potential for jeopardizing defence, human actions are crucial to safe operation and professionalism and safety culture allow the staff to contribute to ensuring reliable operation and detecting and preventing anomalies at the initial stage. 
+Moreover, if sufficient time and information are available, a person is able to react constructively in situations that cannot be completely planned for and therefore cannot be controlled by automatic actions. 
+However, successful human action requires a high level of qualification and training, including simulator training for a wide range of operational situations." 
+This foresight is especially relevant in the context of modern cybersecurity, given that a substantial portion of data breaches can be traced back to human factors, whether through unintentional error or successful social engineering attacks.
+Beyond the human element, the INSAG framework details other means for achieving operational safety. 
+The principles from section 3.3 of INSAG-10 \cite{did2} are summarized below. 
+These well-established concepts can provide a valuable foundation for developing modern security methodologies. 
+
+\noindent "\textit{Technical specifications and operating procedures}":\\
+Operational safety relies on technical specifications and operating procedures. 
+Initially derived from deterministic design, they are improved with probabilistic studies and operating experience to function as the primary tools for accident prevention. 
+Developed in advance for training, these documents cover all plant states, from normal operation to accident conditions. 
+They are managed through an iterative process of periodic checks, modifications, and approvals that continues throughout the plant's life.\\
+\\
+"\textit{The human factor and training of plant personnel}":\\
+The human factor in safety is twofold: human error is a potential risk, while skilled human action is a means of managing unplanned events that automated systems cannot. 
+Therefore, performance depends on qualification and continuous, adaptive training. 
+Training programs include competence checks, refresher courses, and simulator exercises, and they are updated with system changes and lessons from incidents at other facilities. 
+These requirements apply to all personnel impacting safety, including staff and contractors, and cover both technical and interpersonal managerial skills.\\
+\\
+"\textit{Maintenance and surveillance}":\\
+A program of maintenance and surveillance preserves the physical integrity of the plant, with the objective of preventing equipment degradation. 
+The focus is on preventive maintenance to avoid malfunctions, rather than restoring systems after a failure. This includes measures to counteract age-related degradation, such as using surveillance to detect anomalies and replacing components before they fail. 
+All maintenance is planned, documented, executed by qualified personnel, and independently verified. 
+Any intervention on a safety-related system must follow the defense-in-depth concept, which involves risk evaluation, preparation, and final requalification.\\
+\\
+"\textit{Management and safety culture}":\\
+A management and safety culture is defined by an organizational attitude that establishes nuclear plant safety as the overriding priority. 
+This requires a "questioning and learning attitude" to discourage complacency and ensure problems are promptly detected and corrected. 
+The organization provides a structure with defined responsibilities, lines of authority for safety decisions, information flow, and the necessary financial and human resources. 
+Plant management holds direct responsibility for safe operation, while senior management is responsible for fostering the culture and reviewing performance.\\
+\\
+"\textit{Operating experience}":\\
+Information from operating experience is used to compare design assumptions with observed performance and improve defense in depth. 
+This continuous process helps prevent accidents by learning from precursors and influences future plant designs. 
+A feedback system is required to exchange, review, and analyze this information both internally and with other operators. 
+The process also includes a search for the root causes of incidents to identify hidden deficiencies in the defense layers.\\
+\\
+"\textit{Analysis of the safety impact of plant modifications}":\\
+An analysis of the safety impact of plant modifications is required for any change to the plant. 
+The process starts with a precautionary review, where design changes are assessed and planned before implementation. 
+After a modification is made, the affected systems undergo post-modification verification and are requalified to confirm they function as intended. 
+The change is then promptly reflected in all relevant plant documents, procedures, and personnel training.\\
+\\
+These well-established concepts can provide a valuable foundation for developing modern security methodologies. 
+In contrast to outdated perimeter-based models, these principles still align with modern regulations like GDPR and nFADP and frameworks such as Zero Trust. 
+For instance, INSAG-10's definition of "Deterministic design" (Article 56, 3.1) directly mirrors the modern concept of \textit{Security by Design}.
+
+\subsubsection{The Open Systems Interconnection (OSI) Model}
+
+To manage the complexity inherent in network communication, the International Standards Organization (ISO) introduced the Open Systems Interconnection (OSI) Reference Model. 
+The challenge was that multiple machines with different operating systems had to talk to each other. 
+The framework provides a standardized architecture for network systems by partitioning the communication process into seven distinct, manageable layers. 
+Each layer is assigned specific tasks and responsibilities, creating a universal model for network protocol design and troubleshooting \cite{day}. 
+While the specific protocols developed under the OSI standard were not widely adopted and are now largely obsolete, the seven-layer model itself remains an academic and diagnostic tool for understanding the architecture and function of computer networks \cite{steen2017distributed}.
+
+The purpose of the OSI model is to enable communication between disparate "open systems." 
+An open system is defined as one that adheres to a set of rules, or communication protocols, which govern the format, content, and meaning of exchanged messages. 
+These protocols provide a communication service, which can be categorized into two primary types. 
+A \textbf{connection-oriented service} requires the establishment of a dedicated connection between the sender and receiver before data is exchanged, analogous to a telephone call. 
+Conversely, a \textbf{connectionless service} allows the sender to transmit data without any prior setup, similar to sending a letter through the postal service. 
+The practical application of this layered architecture involves a process known as encapsulation. 
+When a message is sent, it originates at the Application Layer and travels down the stack. 
+At each layer, a protocol-specific header is added, wrapping the data from the layer above. 
+This process continues until the message, now fully encapsulated, is transmitted as a stream of bits by the Physical Layer. 
+Upon arrival at the destination, the process is reversed: each layer on the receiving end strips off its corresponding header, processes the information, and passes the remaining data up to the next layer until the original message is delivered to the recipient's application. 
+This systematic encapsulation and de-encapsulation ensure that each layer can perform its function independently, communicating with its peer layer on the remote machine. \cite{steen2017distributed}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=100mm]{USIINFMScThesis/attachments/OSI Model.png}}
+    \caption{Layers, interfaces, and protocols in the OSI model.}
+    \label{fig:OSI}
+\end{figure}
+
+The architecture of the OSI model is hierarchical, consisting of seven layers. 
+Each layer uses the services of the layer directly below it and, in turn, provides specific services to the layer above it through a defined interface. 
+The modularity allows for the independent development and analysis of each layer. 
+You can cluster the seven layers into two main groups for better understanding. 
+The lower three layers (Physical, Data Link, and Network) are referred to as the Media Layers, as their primary responsibility is the transmission of data across the network media. 
+The upper four layers (Transport, Session, Presentation, and Application) are known as the Host Layers. 
+Their functions are concerned with providing accurate data delivery and user interaction, and they are typically implemented within the software on the end-user host machines. 
+This practical consolidation is reflected in modern network models like TCP/IP, which merges the responsibilities of the OSI Session, Presentation, and Application layers into a single, comprehensive Application Layer. 
+The seven layers are as follows \cite{steen2017distributed}:
+
+\paragraph{1. Physical Layer:} 
+This is the foundation upon which all higher-level functions are built. 
+It is responsible for the transmission and reception of raw binary data across a physical medium. 
+This involves the bit-level transmission between devices using hardware like cables, wires, cards, and antennas. \cite{NOTES} 
+The layer governs the tangible aspects of networking by defining the electrical, mechanical, and procedural specifications for this hardware, converting digital bits (0s and 1s) into physical signals like electrical pulses or light waves. \cite{steen2017distributed} 
+It is important to note that the layer is not the hardware itself, but the data and signals traveling through it. \cite{NOTES}\\
+The tangible nature exposes it to distinct security vulnerabilities that often cause service disruptions. 
+It is vulnerable to physical tampering, where an attacker could sever cables or install malicious hardware, and eavesdropping (or wiretapping), which involves the direct interception of signals to perform a Man-in-the-Middle attack. 
+Furthermore, the signals are vulnerable to intentional electromagnetic interference (jamming), which can be used to orchestrate a Denial-of-Service (DoS) attack. 
+This layer is also susceptible to environmental threats like natural disasters, server room fires, or improper humidity and temperature, as well as failures in physical access control where an unauthorized person gains entry to a server room. \cite{NOTES} 
+The Physical Layer does not perform any native encryption; any data not secured is transmitted in plaintext. 
+This means that if an attacker successfully overcomes the physical security, the intercepted data is completely exposed. \cite{xphy}\\
+Mitigations at this layer focus on physical and procedural controls. 
+Implementing strong access controls, such as locks on server rooms, prevents unauthorized access and physical tampering. 
+While environmental disasters cannot be prevented, having a robust disaster recovery and backup plan allows a business to react quickly and restore services. \cite{NOTES}\\
+
+\paragraph{2. Data Link Layer:} 
+This layer establishes a reliable connection for node-to-node data transfer between adjacent devices on a local network segment. \cite{steen2017distributed,} 
+It takes the raw bitstream from the Physical Layer and organizes it into structured units called frames, each containing a header with source and destination MAC addresses and a trailer for error detection. 
+The layer is made up of two sublayers: the Media Access Control (MAC) and Logical Link Control (LLC) sublayers. 
+Its main function is to handle problems that occur from bit-transmission errors, ensure data flow is paced correctly, and permit the transmission of data to the Network Layer. 
+Common protocols include ARP and IEEE 802.11 (wireless LAN). \cite{NOTES}\\
+Common threats include MAC spoofing, where an attacker impersonates a trusted device's hardware address, and ARP poisoning, which manipulates the network's address resolution process. \cite{xphy} 
+ARP poisoning allows an attacker to masquerade as a legitimate host to intercept data, affecting upper-layer security and serving as a starting point for Man-in-the-Middle (MitM), session hijacking, or DoS attacks. 
+Additionally, network switches can be targeted with MAC flooding, where the switch's MAC table reaches its capacity, forcing it to broadcast all traffic to every port and enabling widespread eavesdropping.\\
+Configurations can be done to prevent these attacks. 
+MAC flooding can be prevented with port security, and ARP spoofing can be prevented by using a static ARP table or an Intrusion Detection System (IDS) to detect high amounts of ARP traffic with dynamic ARP inspection. \cite{NOTES}
+
+\paragraph{3. Network Layer:} 
+This layer is responsible for moving data packets between different networks by determining the most efficient path from source to destination. 
+It accomplishes this using logical IP addresses for global device identification and relies on routers to read packet headers and forward them across the internet. \cite{steen2017distributed} 
+Essentially, this is the layer that tells the data where to go on the network. 
+Common protocols are foe example IPv4/IPv6, and the security protocol IPSec.\\
+Common threats include IP spoofing, where an attacker forges a source IP address to hide their identity; large-scale DDoS attacks. 
+And route poisoning, which manipulates router tables to redirect or block traffic. \cite{xphy} 
+IP spoofing is often used to complete DoS/DDoS attacks because the source IP in the header is altered. 
+To counter these threats, hardware like firewalls and Intrusion Prevention Systems (IPS) can be used. \cite{xphy} 
+One way to mitigate IP spoofing is through packet filtering with a firewall that will block a packet when the IP address is wrong or spoofed. \cite{NOTES}
+
+\paragraph{4. Transport Layer:} 
+This layer provides reliable end-to-end communication and data integrity between applications. \cite{steen2017distributed} 
+The two most important protocols on this layer are the connection-oriented TCP for guaranteed delivery and the faster, connectionless UDP for real-time services.\footnote{hacker\_article} \cite{NOTES} 
+It manages communication by segmenting data for transmission, assigning port numbers to direct traffic to the correct application, and using sequence numbers in TCP to ensure data is reassembled in the correct order and without errors. \cite{steen2017distributed}\\
+These mechanisms create distinct vulnerabilities. 
+TCP's connection-establishing handshake can be exploited by TCP SYN floods to overwhelm server resources. 
+This is a type of DDoS attack known as the half-open attack, where an attacker will make many connection attempts with a spoofed IP address without allowing the connection to finalize. \cite{xphy, NOTES} 
+TCP's sequence numbers can also be predicted to facilitate session hijacking, and attackers perform reconnaissance through port scanning to identify which services are open and potentially vulnerable.\\
+Mitigating SYN flood attacks can be done by enabling firewall filtering and SYN cookies, which can help drop the unnecessary requests that are not legitimate. \cite{NOTES} 
+Next-generation firewalls provides accelerated processing to detect and block volumetric attacks \cite{neupane2018next}, and applying zero-trust principles should validate every connection attempt to prevent unauthorized access. \cite{xphy}
+
+\paragraph{5. Session Layer:}
+This Layer is responsible for establishing, managing, and terminating communication sessions between applications, providing the necessary support for dialogue control and synchronization. 
+In order to view a webpage, the user has to establish a connection to the web server; this layer creates, manages, accepts, opens, and closes these sessions. 
+Common protocols are NetBIOS, PAP, and SMPP (Short Message Peer-to-Peer). \cite{NOTES}
+Attackers can exploit this layer through session hijacking, where they intercept authentication tokens or session IDs to take control of an established session and gain unauthorized access. 
+An attacker can compromise the token by guessing what the authentic session token will be, which can be done through cross-site scripting (XSS), cookie theft, and brute-force attempts. 
+Attackers can also perform replay attacks by capturing legitimate data packets and re-transmitting them later to trick the system into granting access or repeating a transaction. \cite{xphy} 
+Ways to mitigate this are through HTTPS, which ensures encryption, preventing access to cookies from client-side scripts, and new keyword generation after authentication has been established. \cite{NOTES}
+
+\paragraph{6. Presentation Layer:}
+"Prescribes how data is represented in a way that is independent of the hosts on which communicating applications are running." \cite{steen2017distributed} 
+The Presentation Layer, also known as the translation layer, functions as the data translator for the network. 
+It ensures that data sent from the application layer of one system can be understood by the application layer of another. 
+It handles three primary tasks: data formatting (e.g., converting between ASCII and EBCDIC), data compression, and, most critically for security, encryption and decryption. 
+Protocols include SSL, AFP, and NCP (Network Core Protocol). \cite{NOTES}\\
+Because this layer is responsible for interpreting and manipulating data structure, it is susceptible to attacks that directly exploit the data. 
+A primary threat is SSL hijacking, where a threat actor takes advantage of encryption flaws. 
+In the case of malware already present on the machine, a threat actor could start a Man-in-the-Middle attack where a proxy could be used as a fraudulent certificate authority. 
+The browser would then trust the certificate, and the threat actor will read all the messages. 
+Other threats include malware injection into seemingly benign files or code exploitation targeting vulnerabilities in how data formats are parsed. \cite{xphy}\\
+To mitigate SSL hijacking, organizaitons need to make sure the antivirus is up to date and they use the secure version of HTTP (HTTPS). \cite{NOTES} 
+Additionally, hardware-based encryption and decryption modules provide superior protection, offloading intensive cryptographic calculations to offer faster, more secure, and tamper-resistant data processing.
+
+\paragraph{7. Application Layer:} 
+This is the direct interface for user applications to access network services. 
+It's what users interact with, encompassing a wide range of high-level protocols like HTTP/S for web browsing, SMTP for email, and FTP for file transfers. \cite{steen2017distributed} 
+The application itself may not be part of this layer, but its services are. 
+Some of the main protocols are BitTorrent, MIME (S/MIME), and SMB (Server Message Block). \cite{NOTES}\\ 
+This layer is a primary target for a vast amount of threats, including SQL injection, cross-site scripting (XSS), phishing, and malware distribution. 
+The attack surface is very large and includes various types of malware such as worms, keyloggers, Trojans, and viruses. 
+One of the most prevalent attacks are various DDoS attacks, one being a low and slow DDoS attack often used with the Slowloris tool. 
+These are hard to detect since they appear to be legitimate traffic and can be launched from a single computer. \cite{NOTES}
+Some signs of a low and slow attack can be identified by performing a network behavioral analysis to get a baseline and then comparing it to a time when the attack may be occurring. 
+Mitigation of these attacks can be done with DDoS mitigation systems (IDMS) that run on the key applications that need to be protected and are tuned to protect other applications or servers running behind them. \cite{NOTES}\\
+\\
+\noindent \textbf{Summary:}The layered structure of the OSI model also provides a valuable framework for thinking about a robust, multi-layered security strategy. 
+Traditional software-based security solutions often consume significant system resources and can be vulnerable to software-based attacks. 
+In contrast, a modern approach advocates for hardware-based security solutions integrated at each OSI layer. 
+This strategy addresses the shortcomings of software-only protection by processing security operations directly in hardware. 
+This reduces system overhead and provides tamper-resistant protection against both physical and logical attacks. 
+Key practices in such a defense-in-depth strategy include network segmentation to limit the spread of attacks, end-to-end encrypted communications for sensitive data, and the implementation of zero-trust principles at the hardware level. 
+Furthermore, using hardware-embedded AI for real-time monitoring of system behavior allows for automatic detection and response to both known and unknown threats, ensuring consistent protection without the need for constant updates. \cite{xphy} 
+However with using these models, we still need to consider reality. 
+There common attacks for each OSI layer that we need to keep in mind and try to mitigate as much as possible. \\
+The bottom line is, there are defense mechanisms we just need to find them and actually also activate them. 
+Recall the participant in our interview that had an antivirus program with advanced endpoint functions, but that did not activate it.\\
+\\
+Sinha et al. (2017) \cite{sinha2017security} summarizes the characteristics and countermeasures of attacks in various OSI layers in his paper. 
+Under \textit{V. open challenges} he states that "most security research related to physical layer addresses only the eavesdropping attack and neglects various types of wireless attacks. 
+These mixed wireless attacks needs to be countered in WSNs". 
+He talks about Wireless Sensor Networks but to a large extend the threads described are also applicable to an organization's general security system, as a business is also exposed to the internet and uses the same fudamental technology. 
+Therefore his statement shows that again what we mentioned in the interwiev analysis. 
+Security engineers need to think about who can connect to the wifi in the company and then maybe implement different security levels (for example Guest wifi and internal). 
+His results summarize different types of attacks and countermeasures at different levels of the OSI reference model and are shown below in table 5.1. 
+As this paper was written about WSN, not all of the Characteristics match. 
+For example jamming and DoS play a bigger role in WSN. 
+Also the countermeasure for the Network injection is specific for WSN. 
+But we can learn from the rest of the countermeasures. 
+We can see that using cryptographic techniques, firewalls, reducing the SYN timer, reducing the UDP packets response rate and Firewalls and antiviruses are countermeasures against the attacks elaborated in the paper.
+
+\begin{table}[]
+\caption{Sinha et al. (2017): Characteristics and Countermeasures of Attacks in Various OSI Layers}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|lll|ll}
+\cline{1-3}
+\multicolumn{1}{|l|}{\textbf{Attacks}}                                                                           & \multicolumn{1}{l|}{\textbf{Characteristics}}                                                                                                                                                                     & \textbf{Countermeasures}                                                                                                                                    &  &  \\ \cline{1-3}
+\multicolumn{3}{|l|}{\textbf{Physical layer attacks}}                                                                                                                                                                                                                                                                                                                                                                                                                                              &  &  \\ \cline{1-3}
+\multicolumn{1}{|l|}{\begin{tabular}[c]{@{}l@{}}- Eavesdropping attack\\ - Jamming attack\end{tabular}}          & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}- Confidential data packets interception\\ - Legitimate data transmission interruption.\end{tabular}}                                                              & \begin{tabular}[c]{@{}l@{}}- Cryptographic techniques.\\ - Spread spectrum techniques such as FHSS, \\DSSS and\\ THSS.\end{tabular}                           &  &  \\ \cline{1-3}
+\multicolumn{3}{|l|}{\textbf{MAC layer attacks}}                                                                                                                                                                                                                                                                                                                                                                                                                                                   &  &  \\ \cline{1-3}
+\multicolumn{1}{|l|}{\begin{tabular}[c]{@{}l@{}}- MAC spoofing\\ - MITM attackNetwork injection\end{tabular}}    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}- MAC addresses falsification.\\ - Communicating nodes impersonation\\ - Preventing networking devices operation\end{tabular}}                                     & \begin{tabular}[c]{@{}l@{}}- Use of ARP packets\\ - Use of Virtual Private Networks (VPNs)\\ - Reprogramming of network devices\end{tabular}                &  &  \\ \cline{1-3}
+\multicolumn{3}{|l|}{\textbf{Network layer attacks}}                                                                                                                                                                                                                                                                                                                                                                                                                                               &  &  \\ \cline{1-3}
+\multicolumn{1}{|l|}{\begin{tabular}[c]{@{}l@{}}- IP hijacking\\ - IP spoofing\\ - Smurf attack\end{tabular}}    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}- Legitimate users IP address impersonation\\ - IP address falsification- Sending\\ overwhelming number of ICMP\\ requests\end{tabular}}                             & \begin{tabular}[c]{@{}l@{}}- Firewalls\\ - Firewalls\\ - Routers and individual users are configured\\ not toconstantly respond to ICMP requests\end{tabular} &  &  \\ \cline{1-3}
+\multicolumn{3}{|l|}{\textbf{Transport layer attacks}}                                                                                                                                                                                                                                                                                                                                                                                                                                             &  &  \\ \cline{1-3}
+\multicolumn{1}{|l|}{\begin{tabular}[c]{@{}l@{}}- TCP flood\\ - UDP flood\end{tabular}}                          & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}- Sending overwhelming number of ping\\ requests.\\ - Sending overwhelming number of UDP\\ packets.\end{tabular}}                                                  & \begin{tabular}[c]{@{}l@{}}- Increasing the TCP backlog and reducing \\the SYN\\ timer\\ - Reducing the UDP packets response rate.\end{tabular}               &  &  \\ \cline{1-3}
+\multicolumn{3}{|l|}{\textbf{Application layer attacks}}                                                                                                                                                                                                                                                                                                                                                                                                                                           &  &  \\ \cline{1-3}
+\multicolumn{1}{|l|}{\begin{tabular}[c]{@{}l@{}}- Malware attack\\ - SQL injection\\ - SMTP attack\end{tabular}} & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}- Disrupt or intercept the legitimate\\ confidential data\\ - Gaining unauthorized access to several\\ websites.Email spoofing and password\\ sniffing\end{tabular}} & - Firewalls and anti viruses                                                                                                                                &  &  \\ \cline{1-3}
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Summary: Six Principles to Follow in Cybersecurity Architecture}
+This section outlines six foundational principles for designing a robust cybersecurity architecture. 
+Our framework adapts five key principles from IBM cybersecurity expert Jeff Crume\footnote{The original principles are detailed in the video presentation titled: \textit{Cybersecurity Architecture: Five Principles to Follow (and One to Avoid)}\cite{jeff_crume1}.}. 
+We expand upon this established foundation by adding the data first principle.
+
+\subsubsection{1. Data-First Principle}
+This principle establishes that in cybersecurity, we should always focus on what we want to protect—which is, most of the time, critical data or other sensitive information. 
+The traditional perimeter-based approach was therefore misleading for many years, but the industry and security professionals finally awakened to this reality, especially after the COVID-19 pandemic and the remote work paradigm shift, and have adopted a different mindset. 
+In Europe and Switzerland, regulations like the GDPR and nFADP are data-centric in nature and align with the adoption of zero-trust principles. 
+However, this approach is often not yet explicitly defined as such, which is why it must be represented as its own principle. 
+This is essential because data, both our own organizational data and other people's data entrusted to us as administrators (or accepted through privacy policies), is ultimately what we aim to protect.
+
+\subsubsection{2. Principle of Defense in Depth}
+As shown in the literature review, there is a paradigm shift in cybersecurity. 
+The philosophy has moved from a \textit{castle-and-moat} approach toward a \textit{zero-trust} mindset. 
+Figure 5.3 shows the old perimeter-based approach where the company network is protected by only a single firewall. 
+In the era of IoT, this approach no longer holds, as there are too many attack vectors inside the network for us to properly control and mitigate all of them effectively.
+
+\begin{figure}[htbp]
+   \centering
+    \fbox{\includegraphics[width=60mm]{USIINFMScThesis/attachments/security_perimeter_defense.png}}
+    \caption{Old school security perimeter defense model.}
+  %  \label{fig:defense_in_depth_old}
+\end{figure}
+
+\noindent With regard to defense in depth and protecting the layers of the OSI model, the old-school defense model represents only a single line of defense. \
+Defense in depth is about making it very difficult for an attacker to gain full access to the system. 
+This is achieved by creating different security layers. 
+We achieve this by understanding the IT infrastructure through the OSI model and then ensuring we have effective security on each of these layers. 
+We can employ different combinations of hardware and software on different layers. 
+Figure 5.4 gives an example of a defense-in-depth process flow for a client request to a database. 
+
+\begin{figure}[htbp]
+   \centering
+    \fbox{\includegraphics[width=135mm]{USIINFMScThesis/attachments/Defense_in_Depth.png}}
+    \caption{An example for defense in depth. Client Request to Database}
+   % \label{fig:defense_in_depth}
+\end{figure}
+
+\noindent The client accesses the web server and has to perform multi-factor authentication. 
+With mobile device management, we can ensure that only certain devices gain access. 
+Before the request reaches the web server, it has to go through a firewall as another layer of defense. 
+This firewall can be installed between the connections or directly on powerful routers with proper configuration.
+Then the request is forwarded to the application server and has to cross another line of defense—another firewall. 
+Once it reaches the application server, it requests access to the database. 
+Not everyone can read what is in the database, and the request is only specifically for one configured use (based on the capabilities) of the user. 
+Figure 5.5 shows the previous example, but implemented with a single firewall on the router rather than two separate firewalls. \
+Also, the company network is segmented into internal communications and a segment that communicates with the outside. 
+We can assume the other security mechanisms (the other layers) from the previous example are still in place (for example, MFA, encryption, etc.). 
+The user again wants to access a resource. 
+The router receives a request, and before anything happens, the firewall filters the incoming traffic. 
+An access control mechanism checks if the user has access rights to send requests. 
+Then it sends the request to the web server. 
+The web server then tells the router that the client wants to access a database. 
+The web server then sends a request to the router, and the router again decides if the web server and its request have access to the application server. 
+After the request reaches the application server, the user can access the desired data. \
+The firewall and network routing are configured in a way so that every time something travels through the network, it needs to punch a hole into the firewall. 
+All traffic is going through the firewall. 
+With this design, we achieve the same result but need only one firewall. 
+For this, however, we also need network segmentation.\cite{jeff_crume1}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=135mm]{USIINFMScThesis/attachments/Defense_in_Depth_Firewall.png}}
+    \caption{An example for defense in depth with firewall.}
+ %   \label{fig:defense_in_depth}
+\end{figure}
+
+\subsubsection{3. Principle of Least Priviledge}
+The principle of least priviledge can be thought of in four categories:\\ 
+(1) ONLY, (2) PRIIVILEGE CREEP, (3) HARDEN, (4) JUST-IN-CASE.
+
+\paragraph{(1) ONLY}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=60mm]{USIINFMScThesis/attachments/ONLY.png}}
+    \caption{Least Privilege access with time constraints.}
+   % \label{fig:only}
+\end{figure}
+
+The principle of least privilege states that you should \textit{only} give access rights to people who need to access the data in order to do their job. 
+Everyone needs to justify why the data is accessed and also for how long this person can access the data. 
+Access rights should be revoked if the purpose is no longer valid (Figure 5.6).
+For example, when an employee gets a promotion and then has different tasks, they might receive new, higher privilege rights, but there might be some domains where they should no longer have access, sometimes for good reason.\cite{jeff_crume1}
+
+\paragraph{(2) PRIVILEGE CREEP and (3) JUST-IN-CASE}
+Figure 5.7 shows two examples of how to correctly manage secirity capabilities. 
+We look at two different points in time: \
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=135mm]{USIINFMScThesis/attachments/Capabilities.png}}
+    \caption{Security Capabilities. How to - and how not to.}
+   % \label{fig:capabilities}
+\end{figure}
+
+At T1, \textit{u1} and \textit{u2} have the same capabilities (access rights). 
+In T2, \textit{u2} received a promotion and now needs to have access to new capabilities. 
+The administrator adds these new capabilities indicated in purple to the list, and additionally adds "just-in-case" controls (indicated in red). 
+The admin could do this for different reasons: either they want to help the employee, or they want to make their own life easier by ensuring the new manager does not need to come back; the latter is more likely. 
+The bottom of Figure 5.7 shows how to do it correctly. 
+New capabilities are added to the list and unnecessary ones are removed. 
+Also, there are no just-in-case controls this time. 
+The principle is least privilege access. 
+Additionally, we need to implement regular reassessments of the capability lists to ensure we notice anything suspicious. 
+Recall that research has shown that privileged accounts outnumber the actual users by 3-5 times.\cite{cyberark_assume_breach}\cite{jeff_crume1}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=60mm]{USIINFMScThesis/attachments/Default_configuration.png}}
+    \caption{Dangers of Default Configurations.}
+  %  \label{fig:defaultConfig}
+\end{figure}
+
+\paragraph{(4) HARDEN}
+This principle states that we need to always harden our systems. 
+For example, if we have a web server that by default runs HTTP for web traffic, it also turns on an FTP server and an SSH service for remote login. 
+System administrators need to check whether the organization actually needs these additional services. 
+This also applies to zero-trust's minimization principles. 
+Only the services crucial for business operations need to be activated. 
+Everything else represents an attack surface. 
+If the organization does not require the FTP or SSH service, then it should be removed entirely. 
+Another way of hardening a system is to change the default configurations of the user IDs.
+We should only keep the necessary IDs and assign new custom names specific to the needs of the company. 
+If the default is ADMIN, then it should be changed.\cite{jeff_crume1}
+
+\subsubsection{4. Principle of Seperation of Duties}
+
+We need to avoid single points of control. 
+This is both a policy and a mechanical concern. 
+If there is a bad actor, we need to ensure no single person can compromise the system. 
+If we imagine the example of a door with two distinct locks, both keys are required to gain access.
+Figure 5.9 shows how this could be implemented. 
+A user with a key sends a request to a policy engine. 
+The policy engine then checks its control lists and either denies or grants access to the resource. 
+The "door" can only be unlocked with the security key of the user \textbf{plus} the security key of the policy enforcement engine. 
+The keys are held privately and are each only known to the key holder and nobody else. 
+An important note here is that the approver and the requester can never be the same entity to maintain the principle.\cite{jeff_crume1}\
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=135mm]{USIINFMScThesis/attachments/two_keys.png}}
+    \caption{Two Key authentication scheme}
+  %  \label{fig:twoKeys}
+\end{figure}
+
+\subsubsection{5. Security by Design}
+
+As also indicated by regulators through GDPR and nFADP, we need to build security into our systems. 
+This means taking security considerations and making investments throughout the complete development phase.
+Security needs to be a topic in every business operation. 
+We need to address it at the beginning, during business processes, and also at the end when thinking about how to retire data (more on this topic in the next section 5.3.3 \textit{Data Lifecycle}).\cite{jeff_crume1}
+
+
+\subsubsection{6. Keep It Simple St***d - KISS}
+
+This frequently referenced principle tells security engineers not to over-engineer a security solution. 
+With a growing number of potentially flawed nodes in today's IT systems, it becomes especially important to establish clarity. 
+The key to success is to organize cybersecurity tasks into manageable, approachable segments. 
+When looking at an IT system, the OSI model provides such a way to abstract a security model in order to gain actionable insights. \
+In general, as we have stated many times now, the security system should make it harder for attackers to get into the system. 
+But at the same time, it will be more difficult for the employees of a company as well. 
+This becomes a problem, since then the user might have an incentive to use the system in a way that it is not intended to be used. 
+Look at the maze in Figure 5.10. 
+This should be seen as a metaphor for a security control that makes it difficult to access or move resources. 
+For example, if the user needs to transfer data from one system to another and email is not an option due to the size of the dataset, there should be a convenient mechanism in place to carry out this task. 
+If the process for data transfer is difficult and time-consuming, users will likely attempt to circumvent the security controls we have implemented. 
+For instance, they may resort to using personal storage devices such as SSD hard drives, believing this to be a more efficient solution when proper mechanisms are not provided by the organization. 
+This behavior can result in 1TB of sensitive data being stored on an uncontrolled private SSD hard drive, creating significant security risks.
+Another typical example of users circumventing the maze involves password rules. 
+Password policies might specify that you need to change your password every month and that it needs to contain different characters every time. 
+A typical user behavior is to create a password that uses names, birthdates, or other personal information appended with a number. 
+With the given policy, the user will probably just change the last numbers at the end of the password to easily remember it. 
+KISS is directly opposed to defense in depth. 
+The goal is to find a balance.\cite{jeff_crume1}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=50mm]{USIINFMScThesis/attachments/Maze.png}}
+    \caption{Bypassing security controls}
+  %  \label{fig:twoKeys}
+\end{figure}
+
+\subsubsection{One Security principle to avoid: Security by Obscurity}
+
+For this principle, one thing that is important to understand is: Secret $\neq$ Secure. 
+The goal is not to have the most secretive cybersecurity department but to have specific, controllable secrets centrally organized. 
+The security system needs to be open and observable. 
+An encryption algorithm should be publicly known and scrutinized by the security community to ensure its robustness. 
+We should follow the well-known Kerckhoffs's principle \cite{wiki:Kerckhoffs's_principle}. 
+A cryptographic system should be secure even if you know everything about it \textit{except} the encryption key, because that is the reality. 
+Encrypted traffic can be intercepted, and attackers may reverse-engineer systems. 
+We don't want black-box security; we want glass-box security. 
+That means we use encryption with well-established, publicly vetted protocols like RSA or AES. 
+The key is the only secret in the system. 
+Multiple keys can be held in digital keychain applications for centralized management and controlled access.\cite{jeff_crume1}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\includegraphics[width=60mm]{USIINFMScThesis/attachments/good_encryption.png}}
+    \caption{Secrecy does not automatically imply Security}
+%    \label{fig:encryption}
+\end{figure}
+
+\section{Building Blocks for Cyber Security}
+
+\subsection{Data}
+
+\subsubsection{Definition}
+
+It has to be clearly defined what has to be protected. 
+Nist offers a good deffinition of data.\\
+Data are “a representation of information, including digital and non-digital formats. \cite{nist_tool} 
+And a data asset is “an information-based resource” such as a database, document, webpage, or service.\cite{committee}
+NIST publication IR 8496 idp \cite{nist-ir8496-ipd} uses the term “data asset” to indicate the importance of data resources, as opposed to data in general. 
+Nist defines metadata as "information regarding the context of a specific data asset, like who or what created the data asset (i.e., data provenance) and when and where the data asset was collected." \cite{nist-ir8496-ipd}\\
+To effectively protect data, we must consider malicious acts an attacker might perform. 
+Threats can be observed in four main categories. 
+\textbf{(1) Interception} is a situation where an unauthorized party gains access to data, as seen when a private communication is overheard or when files are illegally copied from a personal directory. 
+Another threat is \textbf{(2) Interruption}, where services or data become unavailable, corrupted, or lost; a denial-of-service attack is a common example. 
+\textbf{(3) Modification} refers to the unauthorized changing of data, such as tampering with database entries or altering a program to secretly log user activities. 
+Lastly, \textbf{(4) Fabrication} involves generating false data or activity that would not normally exist, like adding an unauthorized entry into a password file or replaying previously sent messages to break into a system. 
+The latter three threats—interruption, modification, and fabrication—can be collectively viewed as forms of data falsification \cite{steen2017distributed}.
+\\
+
+\subsubsection{Data Classification and Data Labeling}
+
+Now that there is a clear understanding for the subject we should also define data classification. 
+Data classification is the process an organization uses to characterize its data assets using persistent labels so those assets can be managed properly \cite{nist-ir8496-ipd}. 
+Through this process, organizations assign persistent labels to their data assets, with common classification categories including protected health information (PHI), personally identifiable information (PII), and financial records. 
+The implementation of data classification practices provides organizations with numerous benefits \cite{nist-ir8496-ipd}:
+
+\begin{itemize}
+\item Enabling the application of appropriate cybersecurity and privacy protection requirements to organizational data assets
+\item Facilitating secure data sharing with partners, contractors, and external organizations
+\item Identifying applicable requirements from laws, regulations, contracts, and other compliance sources for specific data assets
+\item Maintaining comprehensive awareness of data assets and their criticality, which supports the implementation of zero-trust architectures and other security technologies
+\item Enforcing access restrictions and transfer controls for organizational intellectual property
+\item Capturing essential metadata about data sources used by generative AI technologies, including large language models
+\item Recording metadata for data assets to address future requirements, such as post-quantum cryptography readiness and migration planning
+\end{itemize}
+
+Good classification practices can transform undifferentiated data into well-understood assets that can be systematically managed according to their sensitivity, value, and regulatory requirements. 
+Data classification is a systematic process for characterizing data assets through persistent labeling mechanisms that enable consistent management and protection throughout the data lifecycle. 
+NIST describes five core functions, policy definition, asset identification, classification determination, labeling, and monitoring. 
+It is important to ensure a coordinated implementation across business, compliance, and technology domains within an organization. 
+Organizations must address three primary pathways through which data enter their systems requiring classification: internal creation, discovery of existing unclassified assets, and importation from external entities, with the latter requiring reclassification regardless of source classifications due to varying organizational requirements and limited interoperability standards. 
+However, implementation can face scalability challenges. 
+Manual classification approaches struggle with the volume and variety of unstructured data. 
+Labels often fail to persist when data crosses system boundaries, creating technical integration problems. 
+Organizations must also determine the appropriate classification granularity. 
+Too many categories create operational overhead, while too few categories lack the precision needed for effective data governance. \cite{nist-ir8496-ipd}
+
+\subsubsection{Data governance}
+
+Data governance and data management work together to ensure proper handling of organizational data assets throughout their lifecycle. 
+Data governance establishes the foundational framework by defining classification policies, protection requirements, and organizational roles and responsibilities, while data management implements and enforces these policies in practice. 
+Sometimes these policies might be given by the regulators. 
+Under HIIPA for example defines what should be seen as PII. 
+The data management process follows four sequential stages: first, data definition involves identifying and cataloging data assets by collecting metadata about their origin, nature, purpose, and quality; second, data classification assigns appropriate categories to each asset based on its definition, metadata, and content analysis; third, data protection implements the necessary security controls dictated by each classification, such as encryption, access restrictions, integrity mechanisms, and retention policies; and finally, data monitoring provides ongoing surveillance to detect changes in data assets or definitions that might require reclassification or updated protection measures while capturing lessons learned for continuous improvement. 
+This systematic approach ensures that all data assets, including metadata, receive appropriate security measures aligned with their business value and risk profile throughout their entire lifecycle.\cite{nist-ir8496-ipd}
+
+\subsubsection{Data Lifecycle}
+
+Data keeps stacking up because storage is relatively cheap nowdays. We need to solve the question:  what happens to the documents and the customer information when we do not need the information anymore? The problem is that even if the data is not highly sensitive if it gets out, there might be disclosures that could damage the reputation of the company. Sometimes a combination of multiple individually anonymous information can lead to precise identification of another person. \\
+The data lifecycle is how an organization manages its data from creation to deletion. 
+It follows six phases \cite{CL_SA_Cybersecurity}: 
+
+\begin{enumerate}
+    \itemsep0em
+    \item Planning
+    \item Data Creation and Acquisition
+    \item Data Storage 
+    \item Data use
+    \item Data sharing
+    \item Data Archiving
+\end{enumerate}
+
+\paragraph{1. Planning}
+While not included in all data lifecycle models, the planning stage is a crucial foundational step that must occur before any data is acquired. \cite{NSA2020} 
+This phase involves establishing a comprehensive data management plan that defines governance roles, responsibilities, and, most importantly, data ownership. 
+It is important to specify who can make decisions regarding data access, use, quality, retention, and eventual destruction. 
+Furthermore, this initial planning must account applicable laws and regulations. 
+GDPR requires organizations to identify a lawful basis for data processing (Article 6) GDPR, conduct Data Protection Impact Assessments (DPIAs) for high-risk activities (Article 35) GDPR, and define clear data governance roles (Article 24) GDPR. 
+Any existing contractual obligations or geopolitical requirements should also be identified at this point. 
+Ultimately, core activities such as data identification, classification, and organization must be completed before the lifecycle even begins, as these factors, along with data volume and sensitivity, will inform the selection of the most appropriate data lifecycle model.\\
+
+\paragraph{2. Data Creation and Acquisition}
+The Data Creation and Acquisition stage involves generating or collecting data from various sources, such as user-generated content, transactional records, or sensor outputs.\cite{NSA2020} 
+A critical activity during this phase is the immediate classification and labeling of data and its metadata, which should occur as close to the source as possible to facilitate better access control and protection throughout the lifecycle. \\
+The classification scheme, which should be kept as simple as possible, might include categories like Public, Confidential, Highly Confidential, and Restricted, with special classifications for sensitive types like Personally Identifiable Information (PII), crypto keys, or biometric data. 
+Applying these labels ensures that necessary protections are in place, a common requirement for data privacy audits. 
+To safeguard the data upon entry, best practices must be employed to ensure integrity and authenticity. 
+This includes implementing robust input validation to prevent injection attacks, using cryptographic techniques, employing secure transmission protocols, and adhering to the principle of data minimization—collecting only what is absolutely necessary, a core tenant of GDPR (Article 5 GDPR). 
+Furthermore, this process must be transparent, and where required, consent must be obtained from individuals, aligning with GDPR's transparency requirements (Articles 12-14 GDPR).\\
+
+\paragraph{3. Data Storage}
+Once created, data must be kept in a manner that ensures both its security and its availability for efficient access and retrieval. \cite{NSA2020} 
+The storage can be on-premises, in the cloud, or within a hybrid environment. 
+Each way presents unique security and compliance challenges. Key security objectives include protecting data from unauthorized access, ensuring high availability through measures like redundancy and backups, and securely managing encryption keys. 
+To meet regulatory standards such as GDPR, organizations must implement robust technical and organizational measures. 
+This includes protecting data through techniques like pseudonymization and encryption (Article 32 GDPR) and enforcing strict access controls (Article 25 GDPR) to ensure that only authorized individuals can interact with the stored information.
+
+\paragraph{4. Data Use}
+Data Use stage information is actively accessed and processed to derive insights and business value. 
+During this phase we need to maintain control over the data while it's in active use. \cite{NSA2020} 
+This includes enforcing strict, authorized access to ensure that only legitimate users can view or manipulate the data for their specific tasks. 
+A significant challenge is protecting data from insider threats during processing. 
+Robust monitoring and security controls are needed. 
+Critically, all activities must comply with regulations like GDPR, which mandates that any data processing must be lawful and strictly limited to the purposes declared at the time of collection (Article 6 GDOR), preventing unauthorized or secondary uses of the information.
+
+\paragraph{5. Data Sharing}
+Data Sharing is essential for enabling collaboration, reporting, and compliance by transmitting data either internally or externally. \cite{NSA2020} 
+Traditional methods often involve copying data, which creates governance challenges and security risks by proliferating uncontrolled duplicates. 
+Refer to the OSI model described to understand how to protect data sharing on the OSI levels. 
+We should use secure protocols like HTTPS and for example protocols like network security standard IEEE 802.1X implementing Data Loss Prevention (DLP) tools to prevent unauthorized exfiltration, and establishing clear data-sharing policies. 
+From a compliance perspective, regulations like GDPR mandate the use of Data Processing Agreements (DPAs) when sharing with third parties (Article 28) and require specific safeguards for international data transfers (Articles 44-50).
+
+\paragraph{6. Data Retiring}
+Data retiring is the final phase of the data lifecycle, where obsolete information is permanently destroyed to prevent unauthorized access. \cite{NSA2020} 
+Key challenges include ensuring the destruction is irreversible, complying with regulations like GDPR, and preventing data breaches from improperly disposed media.\\
+GDPR requires that data is retained only as long as necessary for its stated purpose (Article 5) and that its erasure is irreversible when retired (Article 17). 
+Simple deletion is insufficient, as data can often be recovered from discarded hard drives or USB sticks. 
+Therefore, using documented, irreversible destruction methods is crucial to prevent data remnants from being exploited by attackers.
+
+\subsection{Data classification based on true data value}
+
+When examining existing approaches, numerous methodologies can be found for securing Information Systems. 
+While these methodologies incorporate valuable concepts, they primarily focus on services rather than data. 
+This limitation necessitates the development of a new methodology that prioritizes data as its central concern.
+In order to incentivize companies and their employees to properly protect data, a more effective approach could involve assigning monetary values to different data categories. 
+Companies fundamentally understand financial parameters very well, and providing clear economic valuations for data assets creates tangible incentives for appropriate protection measures. 
+Translating abstract security concepts into concrete business terms enables organizations to make informed decisions. 
+Comparing data protection costs to potential loss values can enable organizations to make better decisions about security tool procurement, staffing levels, and infrastructure investments.
+
+The most expensive breaches included the breach of personally identifiable information. 
+The Personally Identifiable Information Workshop Group of the Indiana Executive Council on Cybersecurity published a guidebook describing what PII is \cite{pii_guidebook} NIST SP 800-122 defines PII as: \cite{nist-sp-800-122} "PII is any information about an individual maintained by an agency, including (1) any information that can be used to distinguish or trace an individual’s identity, such as name, social security number, date and place of birth, mother‘s maiden name, or biometric records; and (2) any other information that is linked or linkable to an individual, such as medical, educational, financial, and employment information. 
+
+\begin{itemize}
+    \item \textbf{Name}, such as full name, maiden name, mother's maiden name, or alias
+    \item \textbf{Personal identification number}, such as social security number, passport number, driver's license number, taxpayer identification number, or financial account or credit card number
+    \item \textbf{Address information}, such as street address or email address
+    \item \textbf{Personal characteristics}, including photographic image (especially of face or other identifying characteristic), fingerprints, handwriting, or other biometric data (e.g., retina scan, voice signature, facial geometry)
+    \item \textbf{Information about an individual} that is linked or linkable to one of the above (e.g., date of birth, place of birth, race, religion, weight, activities, geographical indicators, employment information, medical information, education information, financial information)
+\end{itemize}
+
+We need to classify data by thinking about two main concepts:
+
+\begin{enumerate}
+    \item Data value
+    \item Data confidential level. In this case, a classification like the one used by intelligence agencies is a good starting point:
+    \begin{enumerate}[label=\alph*.]
+        \item For your eyes only
+        \item Top Secret
+        \item Secret
+        \item Confidential
+        \item Unclassified
+    \end{enumerate}
+\end{enumerate}
+
+\subsubsection{Formulas for understanding the value of your data}
+
+\subsubsection{Personal Data Valuation}
+
+Personal data is protected by comprehensive legal frameworks such as the nFADP and GDPR. 
+Jurisdictions like the USA, which historically offered limited personal data protection, are now developing regulations to align with these international standards. 
+Not complying can lead to heavy fines. 
+Therefore the value of PII should be high.
+
+\subsubsection{For Data-Dependent Organizations}
+
+For insurance companies and other organizations whose business models are built on data (e.g., for assessing risk), a simple valuation model can be:
+
+\begin{equation}
+\text{Value} = \text{Annual Revenue} \times 3
+\end{equation}
+
+Healthcare organizations exemplify this dependency. 
+If a hospital loses patient data, medical procedures cannot be performed safely, surgeries must be postponed, and the quality of patient care deteriorates significantly. 
+Patient outcomes and the revenue stream depend fundamentally on data availability and integrity.
+
+\subsubsection{For E-commerce and Customer-Focused Businesses}
+
+In e-commerce, the loss of data can cripple the ability to maintain customer relationships and generate repeat business. 
+These companies rely heavily on customer profiling, recommendation systems, logistics optimization, and effective marketing.
+
+\begin{equation}
+\text{Value} = \text{Annual Revenue from Returning Customers}
+\end{equation}
+
+\subsubsection{ For Administrative and Operational Use}
+
+For data used in administrative and operational contexts, the value can be equated to the potential costs incurred from a breach:
+
+\begin{equation}
+\text{Value} = \text{regul. Fines} + \text{pot. Legal Settlements} + \text{Reputational Damage} + \text{Data Reconstruction Costs}
+\end{equation}
+
+\subsubsection{Research and Intellectual Property Data}
+
+Research data represents a substantial organizational investment and a key competitive advantage.
+This valuation considers both development costs and future revenue potential:
+
+\begin{equation}
+\text{Value} = \text{Estimated Annual Revenue of Resulting Patents} \times 70
+\end{equation}
+
+Here, the multiplier reflects the extended patent protection period and the compounding value of intellectual property. 
+Research data often represents years of investment in personnel and resources, with the potential to generate revenue for decades.
+
+\subsubsection{Industrial Espionage and Competitive Intelligence}
+
+The threat of industrial espionage requires organizations to consider the advantage an adversary could gain from accessing proprietary information. 
+Historical cases like the Panama Papers, where over 11 million confidential documents were compromised via basic email vulnerabilities, demonstrate the catastrophic impact of inadequate data protection.
+A model to quantify this risk could be:
+
+\begin{equation}
+\text{Value} = \text{Competitor's Potential Gain} + \text{Your Organization's Loss from Disclosure}
+\end{equation}
+
+These formulas represent starting points, as many other factors can influence the value of data. 
+This topic requires further research and must be individually adjusted by each company based on its specific context and risk appetite. 
+Protecting a data asset for 20 years for example means ensuring it can withstand two decades of evolving attacks. 
+This implies a security posture that is independent of current software and capable of anticipating 20 years of technological progress in offensive capabilities.
+
+\subsection{Network Security}
+
+\subsubsection{Firewalls}
+
+The firewall serves as a primary defense mechanism, establishing a barrier between a trusted internal network and an untrusted external one like the public Internet. 
+In its most fundamental sense, it acts as a gatekeeper, enforcing access control policies through packet filtering, where it inspects individual data packets and decides whether to permit or block them based on rules governing Layer 3 (IP addresses) and Layer 4 (TCP/UDP ports) of the OSI model \cite{buildingblocks}. 
+This allows for simple actions like blocking traffic from known malicious sources or permitting access only to specific services, such as web or email. \\ 
+\\
+However, this approach is limited and can be defeated by techniques like packet fragmentation or by attackers who rapidly change their IP addresses. \\
+As a more robust and expensive alternative, a circuit gateway reassembles and examines all the packets within an entire TCP session. 
+This more thorough inspection not only provides a higher level of security but can also support advanced functions, such as creating a Virtual Private Network (VPN) to encrypt traffic between two points \cite{secuity_engineering}. 
+While traditionally deployed at the network perimeter in a "castle-and-moat" approach, the contemporary "Zero Trust" security philosophy has redefined their role. 
+Because no network segment is inherently trustworthy in a Zero Trust model, firewalls are needed not just at the edge, but internally to filter all traffic between systems \cite{buildingblocks}.
+
+A Next-Generation Firewall (NGFW) is a network security appliance that integrates traditional firewall functionalities with more advanced capabilities for threat prevention. 
+Unlike legacy firewalls, which primarily inspect network traffic based on source/destination IP addresses and port numbers (OSI Layers 3 and 4), an NGFW operates up to the Application Layer (Layer 7). 
+The primary difference is the possibility for deep packet inspection (DPI). 
+This enables the firewall to analyze the actual content of data packets, rather than just their headers. 
+NGFW's are a powerful tool and can identify the specific applications generating traffic, enforce policies based on application identity, and detect and block malicious payloads or anomalous data that may be embedded within otherwise authorized traffic streams. \cite{nextgenfirewall}
+
+\subsubsection{Proxies}
+
+A third type of firewall, the application proxy, operates with a deep understanding of one or more specific services. 
+According to security expert Ross Anderson, the classic objective of these proxies—such as mail filters or web proxies—is to strip out potentially malicious code like executables, active web content, or macros from incoming documents. 
+However, the widespread adoption of encryption (HTTPS) has significantly reduced the effectiveness of network-level proxies, as they can no longer easily inspect the content of the traffic. 
+This technological shift is pushing the need for filtering from the network to the endpoints themselves.\cite{secuity_engineering}
+Proxies can become a performance bottleneck. 
+Google's BeyondCorp model places proxies are directly in front of internal application servers, reinforcing the Zero Trust principle that the internal network itself should not be trusted. \cite{ward2014beyondcorp}
+
+\subsubsection{Deep Packet Inspection Probe}
+
+Deep Packet Inspection (DPI) functions as a probe for network traffic. 
+It inspects the entire data packet, including its content or payload, across all seven layers of the ISO/OSI model in real-time. 
+This also implies the system should be on a powerful machine. 
+DPI is a foundational technology for tools like Intrusion Detection and Prevention Systems (IDS/IPS), network dissectors, and wiretapping systems.\cite{dpi}\\
+Deep Packet Inspection (DPI) offers benefits by analyzing the actual content of data packets for network management and security. 
+It can be used to identify and block threats, malware, or malicious websites that standard firewalls miss, effectively serving as an intrusion detection and prevention system (IDS/IPS). 
+DPI also allows for granular traffic control, letting organizations prioritize critical applications or data while throttling or blocking non-essential activities such as peer-to-peer downloading. 
+This capability extends to enforcing corporate policies by controlling access to specific applications, securing networks from employee devices, and, on a larger scale, enabling ISPs to prevent DDoS attacks and governments to implement internet censorship. \cite{dpi}
+
+\subsubsection{Intrusion Detection and Prevention Systems (IDS/IPS)}
+
+Intrusion Detection Systems (IDS) and Intrusion Prevention Systems (IPS) receive the traffic processed bu a Deep Packet Inspection (DPI) These systems can identify potential threats by comparing traffic against a database of known malicious signatures. 
+The primary difference lies in their response: an IDS is a passive monitoring tool designed to detect and generate alerts for security personnel (e.g., a Blue Team) to investigate and mitigate. 
+In contrast, an IPS is an active, in-line system that takes immediate, automated action based on pre-configured policies. 
+Upon detecting a threat, an IPS can drop malicious packets, block traffic from the source, and often interface with network firewalls to dynamically implement new filtering rules, thereby stopping an attack in progress.\cite{buildingblocks}
+
+\subsubsection{LAN Segmentation}
+
+A single, large, flat network is a security risk because if one device is compromised, an attacker can easily move laterally to attack any other device on the system. 
+To prevent this, network segmentation is a crucial practice that splits a larger network into smaller, isolated sub-networks, or segments. 
+This segmentation is generally handled in two main ways: logically at OSI Layer 2 or through routing and filtering at OSI Layer 3. 
+With this segmentation, you can create different security domains. 
+For example, a department that works with classified documents can be placed in its own segment, ensuring no other department can access its data.\cite{buildingblocks}\\
+
+The most common way to logically segment a network is by using Virtual Local Area Networks (VLANs). 
+This Layer 2 technology uses the same physical hardware (e.g., switches, cables) but creates multiple, separate virtual networks on top of it. 
+Devices within a VLAN can communicate freely, but their access to other VLANs is restricted. 
+This is achieved by adding a digital tag to each data frame, which switches read to keep the traffic segregated.\\
+Two key security concerns should be considered. 
+First, the security of network devices. 
+If an attacker gains control of a network switch, they could potentially reconfigure the VLANs and grant themselves unauthorized access to any segment.
+Second, the physical security of the network cables. 
+Since data from all VLANs often travels over a single physical cable (a "trunk link"), an attacker who can physically tap this cable could potentially intercept all traffic and analyze the tags to sort it.\\
+Another way to seperate a network is using pyisically seperate networks. 
+Then these segments can be connected with each other. 
+But The important policy is, that the traffic needs to be filtered by a firewall. 
+Every traffic that is not allowed to go through should be stoped. \cite{buildingblocks}
+
+\subsubsection{Encryption}
+
+Encryption is a critical method for keeping network traffic secure. 
+It's used extensively when data is transferred over an untrusted network like the internet, but it's rarely used within internal LANs. 
+This is often true even when a "Zero Trust" security model is followed. 
+This reluctance is for two main reasons:
+
+\begin{itemize}
+    \item Complexity: Implementing encryption requires a complex infrastructure, known as a Public Key Infrastructure (PKI), to manage and distribute encryption keys.
+    \item Cost and Performance: Performing encryption on high-speed networks without introducing significant latency requires powerful hardware, which significantly increases costs.
+\end{itemize}
+
+For situations where LAN encryption is necessary, common technologies include MACsec (standard IEEE 802.1AE-2006) and IPsec (in Transport mode). 
+Keep in mind that newer technologies are still not universally supported by every device and operating system on the market. 
+Therefore again, choosing the right encryption can be a tradeoff. 
+For designing your organization future proof, you should use strong encryption. \cite{buildingblocks}
+
+\subsubsection{Virtual Private Netrowks}
+
+A Virtual Private Network (VPN) is a collection of technologies used to connect two or more sites using an insecure or hostile network. 
+VPNs are also used by roaming clients who need to connect to an information system from different physical locations. 
+There are many different VPN technologies, but all of them include authentication, routing, and encryption to achieve their goals. 
+OpenVPN, WireGuard, and IPSec (tunnel mode) are common VPN implementations.\cite{buildingblocks}
+
+\subsection{Authentication}
+
+Authentication is a widely discussed and critical security process. 
+In essence, it is the mechanism by which an information system verifies the identity of a person, device, or service. 
+In an ideal environment, every entity that connects to the system would first be authenticated and then subjected to a specific set of permissions and restrictions - a process known as \textbf{Authorization}.
+
+Currently, no single method of authentication is infallible. 
+This means that all methods studied and implemented to date carry an inherent risk of being circumvented.
+Common ways to identify a device include:\cite{buildingblocks}
+
+\begin{itemize}
+    \item \textbf{Address:} Devices can be identified using their Layer 2 (MAC, WWN, WWPN), Layer 3 (IP), or Application Level (e.g., iSCSI IQN) addresses. This method of identification is highly insecure.
+    \item \textbf{Token:} This is a common way to identify a device or software, used primarily in Kerberos Realms but also found in other technologies. It is quite secure but has its own weaknesses and drawbacks.
+    \item \textbf{Password:} Passwords are very common but extremely insecure for device authentication.
+    \item \textbf{Digital Certificate or Public Key:} This is a widespread technology that is quite secure, but often less robust than commonly perceived.
+\end{itemize}
+
+\noindent \textbf{Authenticating a Person}:
+
+Identifying a person within a digital realm with absolute certainty is effectively impossible. 
+Every known method has been circumvented and abused, a harsh reality that has been highlighted in numerous legal cases. 
+Typically, human authentication is based on one or more of the following factors:
+
+\begin{itemize}
+    \item \textbf{Something you know:} This category includes secrets like a password or a PIN.
+    \item \textbf{Something you have:} This can be a physical or digital asset, such as a smartcard, a hardware token, encryption keys, a digital certificate, or an authenticator app on a mobile device.
+    \item \textbf{Something you are:} This field involves biometrics, such as fingerprints, facial morphology, iris or retinal scans, bone structure, or palm veins. These methods are often less secure than perceived.
+\end{itemize}
+
+When we combine methods from two or more of these categories to perform a human authentication, this is referred to as ``Multi-Factor Authentication'' (MFA).\cite{buildingblocks}
+
+\subsection{Authorization}
+
+Once a user or device has been successfully authenticated, the next step in the process is Authorization. 
+Authorization is the process of applying one or more Access Control Lists (ACLs) to restrict what an authenticated entity (such as a user, piece of software, or device) is permitted to do. 
+Essentially, it determines their level of access to services within the Information System.
+
+\paragraph{Directory Services: }
+A directory service is often the central component for performing Authentication and Authorization within an Information System. 
+It is a complex system built upon several integrated technologies:
+
+\begin{itemize}
+    \item Directory Server: This is the database containing all the accounts. An account is the logical representation of an "object," such as a device, a piece of software, a service, or a human being. LDAP is the most widely used standard and protocol for directory servers.
+    \item Authentication Services: These are the technologies used to verify the identity of an object. Kerberos and RADIUS are two common technologies used for this purpose.
+    \item Authorization Services: These are the technologies used to define the permissions and restrictions for a specific object after it has been authenticated.
+\end{itemize}
+
+Developing a robust directory service is not a simple task, which is why there are relatively few successful products and software solutions available. 
+The main ones are: Active Directory, Azure Active Directory, JumpCloud, Red Hat Directory Service/FreeIPA.\\
+A secure and well-functioning directory service is the core of an Information System’s security. Keep in mind that if you design the system correctly, all applications that need to perform Authentication and Authorization should delegate these functions to the directory service instead of performing them locally \cite{buildingblocks}
+
+\subsection{LOG}
+
+Logs are text files produced by various devices and software applications. 
+Proper management of these log files is fundamental to cybersecurity. 
+You can think of logs as digital diaries where systems record every relevant event. 
+The main problem in modern information systems is that these logs are often scattered across many different devices and computers. 
+This is because most systems produce logs locally, and it is rare for system administrators to manage them correctly in a decentralized state. 
+The Solution: Centralized Logging
+In a well-designed information system, a central log server is used. 
+All devices and software are configured to send their logs to this single, secure location. \cite{buildingblocks}
+
+This centralized approach has two important advantages:
+
+\begin{itemize}
+    \item Securing the Logs: When an attacker succeeds in compromising a system, one of the first things they will do is clear the logs to cover their tracks. Remote logging protocols are designed to send logs to a central server, but they typically do not include functions to erase logs from that server. Therefore, even if an attacker compromises a machine, they cannot delete the evidence that has already been sent to the secure log server.
+    \item Correlating Events: A SIEM (Security Information and Event Management) system uses various technologies, including Artificial Intelligence (AI), to correlate information from many different devices. By analyzing these combined logs, a SIEM can detect if a cyberattack is in progress and provide guidance on how to mitigate the threat.
+\end{itemize}
+
+\section{Security Methodology}
+
+\subsubsection{Classification}
+
+We need to classify data by thinking about two main concepts:
+
+\begin{enumerate}
+    \item Data value
+    \item Data confidential level. In this case, a classification like used by intelligence agencies is a good starting point:
+    \begin{enumerate}[label=\alph*.]
+        \item For your eyes only
+        \item Top Secret
+        \item Secret
+        \item Confidential
+        \item Unclassified
+    \end{enumerate}
+\end{enumerate}
+
+Each company should define the sensitivity level of their data. 
+PII should be protected very well. 
+Based on the then created topology we can put the right building block to protect the asset in place. 
+
+\subsubsection{Separation}
+
+After classifying the data we can think about separation. 
+Design the network based on the new categories and implement risk measures based on your sensitivity level. 
+Companies often avoid separating data due to concerns about rising hardware, license, and management costs. 
+However, these costs can be strategically managed.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Reserve physical separation} for only the most critical and sensitive data.
+    \item \textbf{Use software-based separation} (e.g., VLANs, SDN, Virtualization) to achieve effective isolation at a lower cost.
+    \item \textbf{Reduce licensing costs} by considering enterprise-grade open-source alternatives
+    \item \textbf{Control management costs} by standardizing on a limited number of system types, which simplifies maintenance.
+\end{itemize}
+
+Separation is a critical security practice for two key reasons:
+
+\begin{enumerate}
+    \item \textbf{It Prevents Privilege Escalation:} If an attacker gains elevated permissions on a single, aggregated system, they can potentially access all the data stored on it. Separation contains the blast radius of such an attack.
+    \item \textbf{It Creates Security Barriers:} Forcing an intruder to navigate multiple, separate systems creates layers of defense that make it significantly harder to access different levels of data.
+\end{enumerate}
+
+\noindent The principle of separation must include administrative roles. 
+Granting a single ``Domain Admin'' account universal access is a major security risk. 
+Different systems should have different administrators to enforce a separation of duties. 
+If a master account is compromised, the entire network is exposed.
+
+\subsubsection{Secure Logging}
+
+Effective security monitoring requires comprehensive data. 
+Configure all network devices, servers, and applications to generate logs. 
+Go beyond the defaults by implementing custom audit systems to track the most sensitive operations. 
+Logs should never be left on the source device. 
+Attackers routinely delete local logs to hide their activity after a compromise. 
+To prevent this, all log data must be sent in real-time to a central log server.
+This creates a secure, off-site record of all activity that cannot be erased by an intruder.
+The central log server must be a protected. 
+Its administration should be separate from the standard IT department. 
+A "Domain Admin" should not have the ability to modify or delete logs. 
+This separation of duties ensures that no single individual with stolen credentials can breach your systems and erase the evidence.
+
+\subsubsection{Services}
+Services are the channels that users (employees, customers) utilize to access data. 
+They are the means, not the end goal, of an information system. 
+However, every service that is enabled adds a layer of risk and complexity. 
+Each service is both a potential attack vector and a pathway to bypass established data classification. 
+Therefore, when designing data access policies, the KISS ("Keep It Simple, Stupid") principle is a critical security principle. 
+The more methods you provide for users to access data, the less secure the overall system becomes.
+
+Common Points of Data Security Failure:
+\begin{itemize}
+    \item Physical Media: Users download data from a secure server onto a personal thumb drive.
+    \item Cloud Services: Users send corporate data from a secure server to a public cloud platform.
+    \item Email Communication: Users attach sensitive files from a secure repository to an email.
+    \item Web Applications: Users access and potentially exfiltrate data from a secure backend via a web interface.
+    \item Data Export: Users query a database and publish the results in an unsecured document.
+\end{itemize}
+
+When data moves from one service to another, its classification and security controls must follow it. 
+If the classification is lost in transit, the security model is fundamentally broken.
+
+\subsubsection{Inventory}
+A comprehensive and strictly controlled inventory of all assets is important. 
+Without adequate controls, it is far too easy for unauthorized devices to be brought into a company and connected to the internal Wi-Fi and corporate network. 
+In many cases, such devices go undiscovered for months, creating significant and persistent security vulnerabilities.
+This inventory must be exhaustive, encompassing not only hardware but also all users, groups, active services, data classification levels, operating systems, software patch levels, access permissions, and audit logs. 
+As a guiding principle, any device or entity not explicitly recorded in the inventory must be prevented from connecting to the company's information system.
+
+\subsubsection{Identification}
+Everything in a modern information system needs a digital identity—not just users and guests, but devices and services as well. 
+Usernames and passwords are a thing of the past; multi-factor and biometric authentication should be the standard. 
+It's important to remember that today's technology still cannot perfectly identify a human being through digital means alone. 
+So, while you should enhance your authentication systems, never assume they are foolproof. 
+It is always better to have a system that sometimes rejects a valid user (a false negative) than one that might accept an invalid user (a false positive).
+
+\subsubsection{Trust no one (X-Files)}
+
+\textit{The Zero Trust Principle}: In modern cybersecurity, trust is a vulnerability. 
+The foundational principle is to never trust, always verify. 
+Consequently, the internal network should not be considered a secure place. 
+Every machine, user, and service account should be treated as potentially malicious, and IP addresses should never be a basis for trust. 
+This approach requires treating your entire network as a hostile environment, securing each device as if it were directly exposed to the public internet.\\
+
+\textit{Data Security in Transit}: Critical Data must always be encrypted in transit and carry a persistent classification label. 
+This label must be checked at every security checkpoint, and the data's classification level should be strictly maintained, never elevated or declassified while moving. 
+This principle is formalized in security frameworks like the Bell-LaPadula model.
+\textit{Bidirectional Traffic Inspection:}
+This security posture is especially critical for firewall configuration. 
+A common and dangerous mistake is to block inbound traffic while implicitly trusting all outbound traffic. 
+Instead, you must rigorously inspect data flow in both directions. 
+Treat both the internal network and the internet as untrusted, checking all data as it moves between any two network segments, even those inside your own system.\
+
+
+\section{Conclusion, limitations and further research}
+
+
+This research investigated the current state of organizational security postures through interviews with ten companies, of which seven provided responses. 
+The current research sample of seven responding organizations limits the generalizability of our findings. 
+Expanded studies with larger, more diverse organizational samples would strengthen the framework's validity. 
+Our findings showed gaps and oversights in security implementations, with some organizations lacking fundamental security elements. 
+Through a comprehensive literature review, we identified the trend toward deperimeterization and the adoption of a zero trust philosophy as key developments in contemporary cybersecurity. 
+Also we mentioned, that a full zero trust implementation is not necessary. 
+Furthermore, as regulatory compliance can be a driving force for a company, we also presented the European GDPR and the Swiss nFADP, which are the key regulatory requirements in this field of research.
+Based on these insights, we developed modular building blocks for cybersecurity implementation and proposed a novel blue team methodology. 
+The presented framework aims to strengthen fundamental security understanding by emphasizing technological implementation over abstract concepts.
+While many security frameworks present high-level conceptual guidance, they often leave implementation details to the discretion of security architects. 
+As our interview analysis showed, this approach can result in suboptimal decisions or critical oversights.
+The primary innovation of our methodology lies in its data-centric approach. Rather than beginning with infrastructure or policy considerations, our framework prioritizes data classification based on organizational value assessment. 
+Once the company understands the level of security they want to apply to the data asset based on its monetary value, all subsequent decisions, including network topology design, protocol selection, and encryption should follow. 
+This approach ensures that security measures align directly with asset protection priorities.
+While this research establishes can be foundational, the current methodology requires further development in multiple areas:
+(1) Future iterations should incorporate more sophisticated formulas for calculating data value, potentially integrating economic models and risk quantification methodologies. 
+(2) A detailed, step-by-step walkthrough of the framework application is essential for practical deployment. 
+Revision 1 of this work will emphasize technical specifications and provide actionable implementation guidelines for security practitioners.
+(3) The framework's compliance with various regulatory requirements necessitates formal legal review. 
+Future research should engage legal expertise to ensure alignment with relevant data protection regulations and industry standards. 
+The current research sample of seven responding organizations limits the generalizability of our findings. 
+Expanded studies with larger, more diverse samples would strengthen the framework's validity. 
+This thesis establishes a foundation for continued research in practical cybersecurity implementation methodologies. 
+The proposed framework represents an initial step toward bridging the gap between theoretical security concepts and practical implementation challenges. 
+We invite the security community to contribute to this ongoing work.
+\\
+Inquiries and contributions regarding this project may be directed to: blue.team.methodology@proton.com
