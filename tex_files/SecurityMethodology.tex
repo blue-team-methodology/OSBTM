@@ -1,0 +1,112 @@
+\section{Security Methodology}
+
+\subsubsection{Classification}
+
+We need to classify data by thinking about two main concepts:
+
+\begin{enumerate}
+    \item Data value
+    \item Data confidential level. In this case, a classification like used by intelligence agencies is a good starting point:
+    \begin{enumerate}[label=\alph*.]
+        \item For your eyes only
+        \item Top Secret
+        \item Secret
+        \item Confidential
+        \item Unclassified
+    \end{enumerate}
+\end{enumerate}
+
+Each company should define the sensitivity level of their data. 
+PII should be protected very well. 
+Based on the then created topology we can put the right building block to protect the asset in place. 
+
+\subsubsection{Separation}
+
+After classifying the data we can think about separation. 
+Design the network based on the new categories and implement risk measures based on your sensitivity level. 
+Companies often avoid separating data due to concerns about rising hardware, license, and management costs. 
+However, these costs can be strategically managed.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Reserve physical separation} for only the most critical and sensitive data.
+    \item \textbf{Use software-based separation} (e.g., VLANs, SDN, Virtualization) to achieve effective isolation at a lower cost.
+    \item \textbf{Reduce licensing costs} by considering enterprise-grade open-source alternatives
+    \item \textbf{Control management costs} by standardizing on a limited number of system types, which simplifies maintenance.
+\end{itemize}
+
+Separation is a critical security practice for two key reasons:
+
+\begin{enumerate}
+    \item \textbf{It Prevents Privilege Escalation:} If an attacker gains elevated permissions on a single, aggregated system, they can potentially access all the data stored on it. Separation contains the blast radius of such an attack.
+    \item \textbf{It Creates Security Barriers:} Forcing an intruder to navigate multiple, separate systems creates layers of defense that make it significantly harder to access different levels of data.
+\end{enumerate}
+
+\noindent The principle of separation must include administrative roles. 
+Granting a single ``Domain Admin'' account universal access is a major security risk. 
+Different systems should have different administrators to enforce a separation of duties. 
+If a master account is compromised, the entire network is exposed.
+
+\subsubsection{Secure Logging}
+
+Effective security monitoring requires comprehensive data. 
+Configure all network devices, servers, and applications to generate logs. 
+Go beyond the defaults by implementing custom audit systems to track the most sensitive operations. 
+Logs should never be left on the source device. 
+Attackers routinely delete local logs to hide their activity after a compromise. 
+To prevent this, all log data must be sent in real-time to a central log server.
+This creates a secure, off-site record of all activity that cannot be erased by an intruder.
+The central log server must be a protected. 
+Its administration should be separate from the standard IT department. 
+A "Domain Admin" should not have the ability to modify or delete logs. 
+This separation of duties ensures that no single individual with stolen credentials can breach your systems and erase the evidence.
+
+\subsubsection{Services}
+Services are the channels that users (employees, customers) utilize to access data. 
+They are the means, not the end goal, of an information system. 
+However, every service that is enabled adds a layer of risk and complexity. 
+Each service is both a potential attack vector and a pathway to bypass established data classification. 
+Therefore, when designing data access policies, the KISS ("Keep It Simple, Stupid") principle is a critical security principle. 
+The more methods you provide for users to access data, the less secure the overall system becomes.
+
+Common Points of Data Security Failure:
+\begin{itemize}
+    \item Physical Media: Users download data from a secure server onto a personal thumb drive.
+    \item Cloud Services: Users send corporate data from a secure server to a public cloud platform.
+    \item Email Communication: Users attach sensitive files from a secure repository to an email.
+    \item Web Applications: Users access and potentially exfiltrate data from a secure backend via a web interface.
+    \item Data Export: Users query a database and publish the results in an unsecured document.
+\end{itemize}
+
+When data moves from one service to another, its classification and security controls must follow it. 
+If the classification is lost in transit, the security model is fundamentally broken.
+
+\subsubsection{Inventory}
+A comprehensive and strictly controlled inventory of all assets is important. 
+Without adequate controls, it is far too easy for unauthorized devices to be brought into a company and connected to the internal Wi-Fi and corporate network. 
+In many cases, such devices go undiscovered for months, creating significant and persistent security vulnerabilities.
+This inventory must be exhaustive, encompassing not only hardware but also all users, groups, active services, data classification levels, operating systems, software patch levels, access permissions, and audit logs. 
+As a guiding principle, any device or entity not explicitly recorded in the inventory must be prevented from connecting to the company's information system.
+
+\subsubsection{Identification}
+Everything in a modern information system needs a digital identity—not just users and guests, but devices and services as well. 
+Usernames and passwords are a thing of the past; multi-factor and biometric authentication should be the standard. 
+It's important to remember that today's technology still cannot perfectly identify a human being through digital means alone. 
+So, while you should enhance your authentication systems, never assume they are foolproof. 
+It is always better to have a system that sometimes rejects a valid user (a false negative) than one that might accept an invalid user (a false positive).
+
+\subsubsection{Trust no one (X-Files)}
+
+\textit{The Zero Trust Principle}: In modern cybersecurity, trust is a vulnerability. 
+The foundational principle is to never trust, always verify. 
+Consequently, the internal network should not be considered a secure place. 
+Every machine, user, and service account should be treated as potentially malicious, and IP addresses should never be a basis for trust. 
+This approach requires treating your entire network as a hostile environment, securing each device as if it were directly exposed to the public internet.\\
+
+\textit{Data Security in Transit}: Critical Data must always be encrypted in transit and carry a persistent classification label. 
+This label must be checked at every security checkpoint, and the data's classification level should be strictly maintained, never elevated or declassified while moving. 
+This principle is formalized in security frameworks like the Bell-LaPadula model.
+\textit{Bidirectional Traffic Inspection:}
+This security posture is especially critical for firewall configuration. 
+A common and dangerous mistake is to block inbound traffic while implicitly trusting all outbound traffic. 
+Instead, you must rigorously inspect data flow in both directions. 
+Treat both the internal network and the internet as untrusted, checking all data as it moves between any two network segments, even those inside your own system.\

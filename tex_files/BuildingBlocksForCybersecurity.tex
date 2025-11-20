@@ -1,0 +1,382 @@
+\section{Building Blocks for Cyber Security}
+
+\subsection{Data}
+
+\subsubsection{Definition}
+
+It has to be clearly defined what has to be protected. 
+Nist offers a good deffinition of data.\\
+Data are “a representation of information, including digital and non-digital formats. \cite{nist_tool} 
+And a data asset is “an information-based resource” such as a database, document, webpage, or service.\cite{committee}
+NIST publication IR 8496 idp \cite{nist-ir8496-ipd} uses the term “data asset” to indicate the importance of data resources, as opposed to data in general. 
+Nist defines metadata as "information regarding the context of a specific data asset, like who or what created the data asset (i.e., data provenance) and when and where the data asset was collected." \cite{nist-ir8496-ipd}\\
+To effectively protect data, we must consider malicious acts an attacker might perform. 
+Threats can be observed in four main categories. 
+\textbf{(1) Interception} is a situation where an unauthorized party gains access to data, as seen when a private communication is overheard or when files are illegally copied from a personal directory. 
+Another threat is \textbf{(2) Interruption}, where services or data become unavailable, corrupted, or lost; a denial-of-service attack is a common example. 
+\textbf{(3) Modification} refers to the unauthorized changing of data, such as tampering with database entries or altering a program to secretly log user activities. 
+Lastly, \textbf{(4) Fabrication} involves generating false data or activity that would not normally exist, like adding an unauthorized entry into a password file or replaying previously sent messages to break into a system. 
+The latter three threats—interruption, modification, and fabrication—can be collectively viewed as forms of data falsification \cite{steen2017distributed}.
+\\
+
+\subsubsection{Data Classification and Data Labeling}
+
+Now that there is a clear understanding for the subject we should also define data classification. 
+Data classification is the process an organization uses to characterize its data assets using persistent labels so those assets can be managed properly \cite{nist-ir8496-ipd}. 
+Through this process, organizations assign persistent labels to their data assets, with common classification categories including protected health information (PHI), personally identifiable information (PII), and financial records. 
+The implementation of data classification practices provides organizations with numerous benefits \cite{nist-ir8496-ipd}:
+
+\begin{itemize}
+\item Enabling the application of appropriate cybersecurity and privacy protection requirements to organizational data assets
+\item Facilitating secure data sharing with partners, contractors, and external organizations
+\item Identifying applicable requirements from laws, regulations, contracts, and other compliance sources for specific data assets
+\item Maintaining comprehensive awareness of data assets and their criticality, which supports the implementation of zero-trust architectures and other security technologies
+\item Enforcing access restrictions and transfer controls for organizational intellectual property
+\item Capturing essential metadata about data sources used by generative AI technologies, including large language models
+\item Recording metadata for data assets to address future requirements, such as post-quantum cryptography readiness and migration planning
+\end{itemize}
+
+Good classification practices can transform undifferentiated data into well-understood assets that can be systematically managed according to their sensitivity, value, and regulatory requirements. 
+Data classification is a systematic process for characterizing data assets through persistent labeling mechanisms that enable consistent management and protection throughout the data lifecycle. 
+NIST describes five core functions, policy definition, asset identification, classification determination, labeling, and monitoring. 
+It is important to ensure a coordinated implementation across business, compliance, and technology domains within an organization. 
+Organizations must address three primary pathways through which data enter their systems requiring classification: internal creation, discovery of existing unclassified assets, and importation from external entities, with the latter requiring reclassification regardless of source classifications due to varying organizational requirements and limited interoperability standards. 
+However, implementation can face scalability challenges. 
+Manual classification approaches struggle with the volume and variety of unstructured data. 
+Labels often fail to persist when data crosses system boundaries, creating technical integration problems. 
+Organizations must also determine the appropriate classification granularity. 
+Too many categories create operational overhead, while too few categories lack the precision needed for effective data governance. \cite{nist-ir8496-ipd}
+
+\subsubsection{Data governance}
+
+Data governance and data management work together to ensure proper handling of organizational data assets throughout their lifecycle. 
+Data governance establishes the foundational framework by defining classification policies, protection requirements, and organizational roles and responsibilities, while data management implements and enforces these policies in practice. 
+Sometimes these policies might be given by the regulators. 
+Under HIIPA for example defines what should be seen as PII. 
+The data management process follows four sequential stages: first, data definition involves identifying and cataloging data assets by collecting metadata about their origin, nature, purpose, and quality; second, data classification assigns appropriate categories to each asset based on its definition, metadata, and content analysis; third, data protection implements the necessary security controls dictated by each classification, such as encryption, access restrictions, integrity mechanisms, and retention policies; and finally, data monitoring provides ongoing surveillance to detect changes in data assets or definitions that might require reclassification or updated protection measures while capturing lessons learned for continuous improvement. 
+This systematic approach ensures that all data assets, including metadata, receive appropriate security measures aligned with their business value and risk profile throughout their entire lifecycle.\cite{nist-ir8496-ipd}
+
+\subsubsection{Data Lifecycle}
+
+Data keeps stacking up because storage is relatively cheap nowdays. We need to solve the question:  what happens to the documents and the customer information when we do not need the information anymore? The problem is that even if the data is not highly sensitive if it gets out, there might be disclosures that could damage the reputation of the company. Sometimes a combination of multiple individually anonymous information can lead to precise identification of another person. \\
+The data lifecycle is how an organization manages its data from creation to deletion. 
+It follows six phases \cite{CL_SA_Cybersecurity}: 
+
+\begin{enumerate}
+    \itemsep0em
+    \item Planning
+    \item Data Creation and Acquisition
+    \item Data Storage 
+    \item Data use
+    \item Data sharing
+    \item Data Archiving
+\end{enumerate}
+
+\paragraph{1. Planning}
+While not included in all data lifecycle models, the planning stage is a crucial foundational step that must occur before any data is acquired. \cite{NSA2020} 
+This phase involves establishing a comprehensive data management plan that defines governance roles, responsibilities, and, most importantly, data ownership. 
+It is important to specify who can make decisions regarding data access, use, quality, retention, and eventual destruction. 
+Furthermore, this initial planning must account applicable laws and regulations. 
+GDPR requires organizations to identify a lawful basis for data processing (Article 6) GDPR, conduct Data Protection Impact Assessments (DPIAs) for high-risk activities (Article 35) GDPR, and define clear data governance roles (Article 24) GDPR. 
+Any existing contractual obligations or geopolitical requirements should also be identified at this point. 
+Ultimately, core activities such as data identification, classification, and organization must be completed before the lifecycle even begins, as these factors, along with data volume and sensitivity, will inform the selection of the most appropriate data lifecycle model.\\
+
+\paragraph{2. Data Creation and Acquisition}
+The Data Creation and Acquisition stage involves generating or collecting data from various sources, such as user-generated content, transactional records, or sensor outputs.\cite{NSA2020} 
+A critical activity during this phase is the immediate classification and labeling of data and its metadata, which should occur as close to the source as possible to facilitate better access control and protection throughout the lifecycle. \\
+The classification scheme, which should be kept as simple as possible, might include categories like Public, Confidential, Highly Confidential, and Restricted, with special classifications for sensitive types like Personally Identifiable Information (PII), crypto keys, or biometric data. 
+Applying these labels ensures that necessary protections are in place, a common requirement for data privacy audits. 
+To safeguard the data upon entry, best practices must be employed to ensure integrity and authenticity. 
+This includes implementing robust input validation to prevent injection attacks, using cryptographic techniques, employing secure transmission protocols, and adhering to the principle of data minimization—collecting only what is absolutely necessary, a core tenant of GDPR (Article 5 GDPR). 
+Furthermore, this process must be transparent, and where required, consent must be obtained from individuals, aligning with GDPR's transparency requirements (Articles 12-14 GDPR).\\
+
+\paragraph{3. Data Storage}
+Once created, data must be kept in a manner that ensures both its security and its availability for efficient access and retrieval. \cite{NSA2020} 
+The storage can be on-premises, in the cloud, or within a hybrid environment. 
+Each way presents unique security and compliance challenges. Key security objectives include protecting data from unauthorized access, ensuring high availability through measures like redundancy and backups, and securely managing encryption keys. 
+To meet regulatory standards such as GDPR, organizations must implement robust technical and organizational measures. 
+This includes protecting data through techniques like pseudonymization and encryption (Article 32 GDPR) and enforcing strict access controls (Article 25 GDPR) to ensure that only authorized individuals can interact with the stored information.
+
+\paragraph{4. Data Use}
+Data Use stage information is actively accessed and processed to derive insights and business value. 
+During this phase we need to maintain control over the data while it's in active use. \cite{NSA2020} 
+This includes enforcing strict, authorized access to ensure that only legitimate users can view or manipulate the data for their specific tasks. 
+A significant challenge is protecting data from insider threats during processing. 
+Robust monitoring and security controls are needed. 
+Critically, all activities must comply with regulations like GDPR, which mandates that any data processing must be lawful and strictly limited to the purposes declared at the time of collection (Article 6 GDOR), preventing unauthorized or secondary uses of the information.
+
+\paragraph{5. Data Sharing}
+Data Sharing is essential for enabling collaboration, reporting, and compliance by transmitting data either internally or externally. \cite{NSA2020} 
+Traditional methods often involve copying data, which creates governance challenges and security risks by proliferating uncontrolled duplicates. 
+Refer to the OSI model described to understand how to protect data sharing on the OSI levels. 
+We should use secure protocols like HTTPS and for example protocols like network security standard IEEE 802.1X implementing Data Loss Prevention (DLP) tools to prevent unauthorized exfiltration, and establishing clear data-sharing policies. 
+From a compliance perspective, regulations like GDPR mandate the use of Data Processing Agreements (DPAs) when sharing with third parties (Article 28) and require specific safeguards for international data transfers (Articles 44-50).
+
+\paragraph{6. Data Retiring}
+Data retiring is the final phase of the data lifecycle, where obsolete information is permanently destroyed to prevent unauthorized access. \cite{NSA2020} 
+Key challenges include ensuring the destruction is irreversible, complying with regulations like GDPR, and preventing data breaches from improperly disposed media.\\
+GDPR requires that data is retained only as long as necessary for its stated purpose (Article 5) and that its erasure is irreversible when retired (Article 17). 
+Simple deletion is insufficient, as data can often be recovered from discarded hard drives or USB sticks. 
+Therefore, using documented, irreversible destruction methods is crucial to prevent data remnants from being exploited by attackers.
+
+\subsection{Data classification based on true data value}
+
+When examining existing approaches, numerous methodologies can be found for securing Information Systems. 
+While these methodologies incorporate valuable concepts, they primarily focus on services rather than data. 
+This limitation necessitates the development of a new methodology that prioritizes data as its central concern.
+In order to incentivize companies and their employees to properly protect data, a more effective approach could involve assigning monetary values to different data categories. 
+Companies fundamentally understand financial parameters very well, and providing clear economic valuations for data assets creates tangible incentives for appropriate protection measures. 
+Translating abstract security concepts into concrete business terms enables organizations to make informed decisions. 
+Comparing data protection costs to potential loss values can enable organizations to make better decisions about security tool procurement, staffing levels, and infrastructure investments.
+
+The most expensive breaches included the breach of personally identifiable information. 
+The Personally Identifiable Information Workshop Group of the Indiana Executive Council on Cybersecurity published a guidebook describing what PII is \cite{pii_guidebook} NIST SP 800-122 defines PII as: \cite{nist-sp-800-122} "PII is any information about an individual maintained by an agency, including (1) any information that can be used to distinguish or trace an individual’s identity, such as name, social security number, date and place of birth, mother‘s maiden name, or biometric records; and (2) any other information that is linked or linkable to an individual, such as medical, educational, financial, and employment information. 
+
+\begin{itemize}
+    \item \textbf{Name}, such as full name, maiden name, mother's maiden name, or alias
+    \item \textbf{Personal identification number}, such as social security number, passport number, driver's license number, taxpayer identification number, or financial account or credit card number
+    \item \textbf{Address information}, such as street address or email address
+    \item \textbf{Personal characteristics}, including photographic image (especially of face or other identifying characteristic), fingerprints, handwriting, or other biometric data (e.g., retina scan, voice signature, facial geometry)
+    \item \textbf{Information about an individual} that is linked or linkable to one of the above (e.g., date of birth, place of birth, race, religion, weight, activities, geographical indicators, employment information, medical information, education information, financial information)
+\end{itemize}
+
+We need to classify data by thinking about two main concepts:
+
+\begin{enumerate}
+    \item Data value
+    \item Data confidential level. In this case, a classification like the one used by intelligence agencies is a good starting point:
+    \begin{enumerate}[label=\alph*.]
+        \item For your eyes only
+        \item Top Secret
+        \item Secret
+        \item Confidential
+        \item Unclassified
+    \end{enumerate}
+\end{enumerate}
+
+\subsubsection{Formulas for understanding the value of your data}
+
+\subsubsection{Personal Data Valuation}
+
+Personal data is protected by comprehensive legal frameworks such as the nFADP and GDPR. 
+Jurisdictions like the USA, which historically offered limited personal data protection, are now developing regulations to align with these international standards. 
+Not complying can lead to heavy fines. 
+Therefore the value of PII should be high.
+
+\subsubsection{For Data-Dependent Organizations}
+
+For insurance companies and other organizations whose business models are built on data (e.g., for assessing risk), a simple valuation model can be:
+
+\begin{equation}
+\text{Value} = \text{Annual Revenue} \times 3
+\end{equation}
+
+Healthcare organizations exemplify this dependency. 
+If a hospital loses patient data, medical procedures cannot be performed safely, surgeries must be postponed, and the quality of patient care deteriorates significantly. 
+Patient outcomes and the revenue stream depend fundamentally on data availability and integrity.
+
+\subsubsection{For E-commerce and Customer-Focused Businesses}
+
+In e-commerce, the loss of data can cripple the ability to maintain customer relationships and generate repeat business. 
+These companies rely heavily on customer profiling, recommendation systems, logistics optimization, and effective marketing.
+
+\begin{equation}
+\text{Value} = \text{Annual Revenue from Returning Customers}
+\end{equation}
+
+\subsubsection{ For Administrative and Operational Use}
+
+For data used in administrative and operational contexts, the value can be equated to the potential costs incurred from a breach:
+
+\begin{equation}
+\text{Value} = \text{regul. Fines} + \text{pot. Legal Settlements} + \text{Reputational Damage} + \text{Data Reconstruction Costs}
+\end{equation}
+
+\subsubsection{Research and Intellectual Property Data}
+
+Research data represents a substantial organizational investment and a key competitive advantage.
+This valuation considers both development costs and future revenue potential:
+
+\begin{equation}
+\text{Value} = \text{Estimated Annual Revenue of Resulting Patents} \times 70
+\end{equation}
+
+Here, the multiplier reflects the extended patent protection period and the compounding value of intellectual property. 
+Research data often represents years of investment in personnel and resources, with the potential to generate revenue for decades.
+
+\subsubsection{Industrial Espionage and Competitive Intelligence}
+
+The threat of industrial espionage requires organizations to consider the advantage an adversary could gain from accessing proprietary information. 
+Historical cases like the Panama Papers, where over 11 million confidential documents were compromised via basic email vulnerabilities, demonstrate the catastrophic impact of inadequate data protection.
+A model to quantify this risk could be:
+
+\begin{equation}
+\text{Value} = \text{Competitor's Potential Gain} + \text{Your Organization's Loss from Disclosure}
+\end{equation}
+
+These formulas represent starting points, as many other factors can influence the value of data. 
+This topic requires further research and must be individually adjusted by each company based on its specific context and risk appetite. 
+Protecting a data asset for 20 years for example means ensuring it can withstand two decades of evolving attacks. 
+This implies a security posture that is independent of current software and capable of anticipating 20 years of technological progress in offensive capabilities.
+
+\subsection{Network Security}
+
+\subsubsection{Firewalls}
+
+The firewall serves as a primary defense mechanism, establishing a barrier between a trusted internal network and an untrusted external one like the public Internet. 
+In its most fundamental sense, it acts as a gatekeeper, enforcing access control policies through packet filtering, where it inspects individual data packets and decides whether to permit or block them based on rules governing Layer 3 (IP addresses) and Layer 4 (TCP/UDP ports) of the OSI model \cite{buildingblocks}. 
+This allows for simple actions like blocking traffic from known malicious sources or permitting access only to specific services, such as web or email. \\ 
+\\
+However, this approach is limited and can be defeated by techniques like packet fragmentation or by attackers who rapidly change their IP addresses. \\
+As a more robust and expensive alternative, a circuit gateway reassembles and examines all the packets within an entire TCP session. 
+This more thorough inspection not only provides a higher level of security but can also support advanced functions, such as creating a Virtual Private Network (VPN) to encrypt traffic between two points \cite{secuity_engineering}. 
+While traditionally deployed at the network perimeter in a "castle-and-moat" approach, the contemporary "Zero Trust" security philosophy has redefined their role. 
+Because no network segment is inherently trustworthy in a Zero Trust model, firewalls are needed not just at the edge, but internally to filter all traffic between systems \cite{buildingblocks}.
+
+A Next-Generation Firewall (NGFW) is a network security appliance that integrates traditional firewall functionalities with more advanced capabilities for threat prevention. 
+Unlike legacy firewalls, which primarily inspect network traffic based on source/destination IP addresses and port numbers (OSI Layers 3 and 4), an NGFW operates up to the Application Layer (Layer 7). 
+The primary difference is the possibility for deep packet inspection (DPI). 
+This enables the firewall to analyze the actual content of data packets, rather than just their headers. 
+NGFW's are a powerful tool and can identify the specific applications generating traffic, enforce policies based on application identity, and detect and block malicious payloads or anomalous data that may be embedded within otherwise authorized traffic streams. \cite{nextgenfirewall}
+
+\subsubsection{Proxies}
+
+A third type of firewall, the application proxy, operates with a deep understanding of one or more specific services. 
+According to security expert Ross Anderson, the classic objective of these proxies—such as mail filters or web proxies—is to strip out potentially malicious code like executables, active web content, or macros from incoming documents. 
+However, the widespread adoption of encryption (HTTPS) has significantly reduced the effectiveness of network-level proxies, as they can no longer easily inspect the content of the traffic. 
+This technological shift is pushing the need for filtering from the network to the endpoints themselves.\cite{secuity_engineering}
+Proxies can become a performance bottleneck. 
+Google's BeyondCorp model places proxies are directly in front of internal application servers, reinforcing the Zero Trust principle that the internal network itself should not be trusted. \cite{ward2014beyondcorp}
+
+\subsubsection{Deep Packet Inspection Probe}
+
+Deep Packet Inspection (DPI) functions as a probe for network traffic. 
+It inspects the entire data packet, including its content or payload, across all seven layers of the ISO/OSI model in real-time. 
+This also implies the system should be on a powerful machine. 
+DPI is a foundational technology for tools like Intrusion Detection and Prevention Systems (IDS/IPS), network dissectors, and wiretapping systems.\cite{dpi}\\
+Deep Packet Inspection (DPI) offers benefits by analyzing the actual content of data packets for network management and security. 
+It can be used to identify and block threats, malware, or malicious websites that standard firewalls miss, effectively serving as an intrusion detection and prevention system (IDS/IPS). 
+DPI also allows for granular traffic control, letting organizations prioritize critical applications or data while throttling or blocking non-essential activities such as peer-to-peer downloading. 
+This capability extends to enforcing corporate policies by controlling access to specific applications, securing networks from employee devices, and, on a larger scale, enabling ISPs to prevent DDoS attacks and governments to implement internet censorship. \cite{dpi}
+
+\subsubsection{Intrusion Detection and Prevention Systems (IDS/IPS)}
+
+Intrusion Detection Systems (IDS) and Intrusion Prevention Systems (IPS) receive the traffic processed bu a Deep Packet Inspection (DPI) These systems can identify potential threats by comparing traffic against a database of known malicious signatures. 
+The primary difference lies in their response: an IDS is a passive monitoring tool designed to detect and generate alerts for security personnel (e.g., a Blue Team) to investigate and mitigate. 
+In contrast, an IPS is an active, in-line system that takes immediate, automated action based on pre-configured policies. 
+Upon detecting a threat, an IPS can drop malicious packets, block traffic from the source, and often interface with network firewalls to dynamically implement new filtering rules, thereby stopping an attack in progress.\cite{buildingblocks}
+
+\subsubsection{LAN Segmentation}
+
+A single, large, flat network is a security risk because if one device is compromised, an attacker can easily move laterally to attack any other device on the system. 
+To prevent this, network segmentation is a crucial practice that splits a larger network into smaller, isolated sub-networks, or segments. 
+This segmentation is generally handled in two main ways: logically at OSI Layer 2 or through routing and filtering at OSI Layer 3. 
+With this segmentation, you can create different security domains. 
+For example, a department that works with classified documents can be placed in its own segment, ensuring no other department can access its data.\cite{buildingblocks}\\
+
+The most common way to logically segment a network is by using Virtual Local Area Networks (VLANs). 
+This Layer 2 technology uses the same physical hardware (e.g., switches, cables) but creates multiple, separate virtual networks on top of it. 
+Devices within a VLAN can communicate freely, but their access to other VLANs is restricted. 
+This is achieved by adding a digital tag to each data frame, which switches read to keep the traffic segregated.\\
+Two key security concerns should be considered. 
+First, the security of network devices. 
+If an attacker gains control of a network switch, they could potentially reconfigure the VLANs and grant themselves unauthorized access to any segment.
+Second, the physical security of the network cables. 
+Since data from all VLANs often travels over a single physical cable (a "trunk link"), an attacker who can physically tap this cable could potentially intercept all traffic and analyze the tags to sort it.\\
+Another way to seperate a network is using pyisically seperate networks. 
+Then these segments can be connected with each other. 
+But The important policy is, that the traffic needs to be filtered by a firewall. 
+Every traffic that is not allowed to go through should be stoped. \cite{buildingblocks}
+
+\subsubsection{Encryption}
+
+Encryption is a critical method for keeping network traffic secure. 
+It's used extensively when data is transferred over an untrusted network like the internet, but it's rarely used within internal LANs. 
+This is often true even when a "Zero Trust" security model is followed. 
+This reluctance is for two main reasons:
+
+\begin{itemize}
+    \item Complexity: Implementing encryption requires a complex infrastructure, known as a Public Key Infrastructure (PKI), to manage and distribute encryption keys.
+    \item Cost and Performance: Performing encryption on high-speed networks without introducing significant latency requires powerful hardware, which significantly increases costs.
+\end{itemize}
+
+For situations where LAN encryption is necessary, common technologies include MACsec (standard IEEE 802.1AE-2006) and IPsec (in Transport mode). 
+Keep in mind that newer technologies are still not universally supported by every device and operating system on the market. 
+Therefore again, choosing the right encryption can be a tradeoff. 
+For designing your organization future proof, you should use strong encryption. \cite{buildingblocks}
+
+\subsubsection{Virtual Private Netrowks}
+
+A Virtual Private Network (VPN) is a collection of technologies used to connect two or more sites using an insecure or hostile network. 
+VPNs are also used by roaming clients who need to connect to an information system from different physical locations. 
+There are many different VPN technologies, but all of them include authentication, routing, and encryption to achieve their goals. 
+OpenVPN, WireGuard, and IPSec (tunnel mode) are common VPN implementations.\cite{buildingblocks}
+
+\subsection{Authentication}
+
+Authentication is a widely discussed and critical security process. 
+In essence, it is the mechanism by which an information system verifies the identity of a person, device, or service. 
+In an ideal environment, every entity that connects to the system would first be authenticated and then subjected to a specific set of permissions and restrictions - a process known as \textbf{Authorization}.
+
+Currently, no single method of authentication is infallible. 
+This means that all methods studied and implemented to date carry an inherent risk of being circumvented.
+Common ways to identify a device include:\cite{buildingblocks}
+
+\begin{itemize}
+    \item \textbf{Address:} Devices can be identified using their Layer 2 (MAC, WWN, WWPN), Layer 3 (IP), or Application Level (e.g., iSCSI IQN) addresses. This method of identification is highly insecure.
+    \item \textbf{Token:} This is a common way to identify a device or software, used primarily in Kerberos Realms but also found in other technologies. It is quite secure but has its own weaknesses and drawbacks.
+    \item \textbf{Password:} Passwords are very common but extremely insecure for device authentication.
+    \item \textbf{Digital Certificate or Public Key:} This is a widespread technology that is quite secure, but often less robust than commonly perceived.
+\end{itemize}
+
+\noindent \textbf{Authenticating a Person}:
+
+Identifying a person within a digital realm with absolute certainty is effectively impossible. 
+Every known method has been circumvented and abused, a harsh reality that has been highlighted in numerous legal cases. 
+Typically, human authentication is based on one or more of the following factors:
+
+\begin{itemize}
+    \item \textbf{Something you know:} This category includes secrets like a password or a PIN.
+    \item \textbf{Something you have:} This can be a physical or digital asset, such as a smartcard, a hardware token, encryption keys, a digital certificate, or an authenticator app on a mobile device.
+    \item \textbf{Something you are:} This field involves biometrics, such as fingerprints, facial morphology, iris or retinal scans, bone structure, or palm veins. These methods are often less secure than perceived.
+\end{itemize}
+
+When we combine methods from two or more of these categories to perform a human authentication, this is referred to as ``Multi-Factor Authentication'' (MFA).\cite{buildingblocks}
+
+\subsection{Authorization}
+
+Once a user or device has been successfully authenticated, the next step in the process is Authorization. 
+Authorization is the process of applying one or more Access Control Lists (ACLs) to restrict what an authenticated entity (such as a user, piece of software, or device) is permitted to do. 
+Essentially, it determines their level of access to services within the Information System.
+
+\paragraph{Directory Services: }
+A directory service is often the central component for performing Authentication and Authorization within an Information System. 
+It is a complex system built upon several integrated technologies:
+
+\begin{itemize}
+    \item Directory Server: This is the database containing all the accounts. An account is the logical representation of an "object," such as a device, a piece of software, a service, or a human being. LDAP is the most widely used standard and protocol for directory servers.
+    \item Authentication Services: These are the technologies used to verify the identity of an object. Kerberos and RADIUS are two common technologies used for this purpose.
+    \item Authorization Services: These are the technologies used to define the permissions and restrictions for a specific object after it has been authenticated.
+\end{itemize}
+
+Developing a robust directory service is not a simple task, which is why there are relatively few successful products and software solutions available. 
+The main ones are: Active Directory, Azure Active Directory, JumpCloud, Red Hat Directory Service/FreeIPA.\\
+A secure and well-functioning directory service is the core of an Information System’s security. Keep in mind that if you design the system correctly, all applications that need to perform Authentication and Authorization should delegate these functions to the directory service instead of performing them locally \cite{buildingblocks}
+
+\subsection{LOG}
+
+Logs are text files produced by various devices and software applications. 
+Proper management of these log files is fundamental to cybersecurity. 
+You can think of logs as digital diaries where systems record every relevant event. 
+The main problem in modern information systems is that these logs are often scattered across many different devices and computers. 
+This is because most systems produce logs locally, and it is rare for system administrators to manage them correctly in a decentralized state. 
+The Solution: Centralized Logging
+In a well-designed information system, a central log server is used. 
+All devices and software are configured to send their logs to this single, secure location. \cite{buildingblocks}
+
+This centralized approach has two important advantages:
+
+\begin{itemize}
+    \item Securing the Logs: When an attacker succeeds in compromising a system, one of the first things they will do is clear the logs to cover their tracks. Remote logging protocols are designed to send logs to a central server, but they typically do not include functions to erase logs from that server. Therefore, even if an attacker compromises a machine, they cannot delete the evidence that has already been sent to the secure log server.
+    \item Correlating Events: A SIEM (Security Information and Event Management) system uses various technologies, including Artificial Intelligence (AI), to correlate information from many different devices. By analyzing these combined logs, a SIEM can detect if a cyberattack is in progress and provide guidance on how to mitigate the threat.
+\end{itemize}
